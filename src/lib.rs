@@ -1,39 +1,50 @@
-mod renderer_backend;
+mod egui_rend3;
+mod render_backend;
 mod window_backend;
+use egui_rend3::EguiRenderOutput;
+use render_backend::GfxBackend;
+pub use window_backend::*;
 
-use egui::{RawInput, TextureId};
-use glfw::WindowEvent;
-use std::collections::HashMap;
-use std::sync::mpsc::Receiver;
-use wgpu::{
-    BindGroup, BindGroupLayout, Device, Queue, Sampler, ShaderModule, SurfaceConfiguration,
-    SurfaceTexture, Texture, TextureView,
-};
+pub trait UserApp {
+    fn run(&mut self, etx: &egui::Context);
+}
 
-pub struct GlfwWindow {
-    pub glfw: glfw::Glfw,
-    pub events_receiver: Receiver<(f64, WindowEvent)>,
-    pub window: glfw::Window,
-    pub size_physical_pixels: [u32; 2],
-    pub scale: [f32; 2],
-    pub cursor_pos_physical_pixels: [f32; 2],
-    pub raw_input: RawInput,
-    pub frame_events: Vec<WindowEvent>,
-}
-pub struct WgpuRenderer {
-    pub egui_state: EguiState,
-    pub textures: HashMap<TextureId, (Texture, TextureView, BindGroup)>,
-    pub egui_linear_bindgroup_layout: BindGroupLayout,
-    pub egui_linear_sampler: Sampler,
-    pub framebuffer_and_view: Option<(SurfaceTexture, TextureView)>,
-    pub surface: wgpu::Surface,
-    pub config: SurfaceConfiguration,
-    pub queue: Queue,
-    pub device: Device,
-}
-pub struct EguiState {
-    pub pipeline: wgpu::RenderPipeline,
-    pub pipeline_layout: wgpu::PipelineLayout,
-    pub bindgroup_layout: BindGroupLayout,
-    pub shader_module: ShaderModule,
+pub fn start(mut app: impl UserApp) {
+    let etx = egui::Context::default();
+    let mut glfw_backend = GlfwWindow::new().expect("failed to create glfw window");
+    let mut gfx_backend = GfxBackend::new(&glfw_backend);
+    while !glfw_backend.window.should_close() {
+        glfw_backend.tick();
+
+        let frame = rend3::util::output::OutputFrame::Surface {
+            surface: gfx_backend.surface.clone(),
+        };
+        // Ready up the renderer
+        let (cmd_bufs, ready) = gfx_backend.renderer.ready();
+
+        // Build a rendergraph
+        let mut graph = rend3::graph::RenderGraph::new();
+        let surface_handle = graph.add_surface_texture();
+        etx.begin_frame(glfw_backend.raw_input.take());
+        app.run(&etx);
+        let output = etx.end_frame();
+        let egui_render_output = EguiRenderOutput {
+            meshes: etx.tessellate(output.shapes),
+            textures_delta: output.textures_delta,
+            scale: glfw_backend.scale,
+            window_size: Some(glfw_backend.window_size),
+            fb_size: glfw_backend.fb_size,
+        };
+        gfx_backend.egui_render_routine.add_to_graph(
+            &mut graph,
+            egui_render_output,
+            surface_handle,
+        );
+        graph.execute(&gfx_backend.renderer, frame, cmd_bufs, &ready);
+        if etx.wants_pointer_input() || etx.wants_keyboard_input() {
+            glfw_backend.window.set_mouse_passthrough(false);
+        } else {
+            glfw_backend.window.set_mouse_passthrough(true);
+        }
+    }
 }
