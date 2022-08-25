@@ -8,24 +8,25 @@ fn toLinear( sRGB: vec4<f32>) -> vec4<f32>
 }
 
 struct VertexOutput {
-@location(0) color: vec4<f32>,
-@location(1) tc: vec2<f32> ,
-@builtin(position) pos: vec4<f32>,
+@location(0) color: vec4<f32>  ;
+@location(1) tc: vec2<f32>  ;
+@builtin(position) pos: vec4<f32>;
 };
 
 struct VertexInput {
-@location(0) pos: vec2<f32>,
-@location(1) tc: vec2<f32>,
-@location(2) color: vec4<f32>,
+@location(0) pos: vec2<f32>;
+@location(1) tc: vec2<f32>;
+@location(2) color: vec4<f32>;
 };
 
 struct Uni {
-u_screen_size: vec2<f32>,
+u_screen_size: vec2<f32>;
 };
 @group(0) @binding(0) var<uniform> uni: Uni;
 
 
-@vertex
+
+@stage(vertex)
 fn vs_main(input: VertexInput ) -> VertexOutput {
 let pos = input.pos;
 var output: VertexOutput;
@@ -40,7 +41,7 @@ var output: VertexOutput;
 @group(1) @binding(0) var u_sampler: sampler;
 @group(1) @binding(1) var u_texture: texture_2d<f32>;
 
-@fragment
+@stage(fragment)
 fn fs_main(
 in: VertexOutput
 )

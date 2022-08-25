@@ -6,12 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glfw = { version = "0.44.0", git = "https://github.com/coderedart/glfw-rs.git", features = [
-    "all",
-] }
+glfw = { version = "0.44.0", git = "https://github.com/coderedart/glfw-rs.git", features = ["all"] }
 bytemuck = "1"
-egui = { version = "0.19", features = ["bytemuck"] }
-rend3 = { git = "https://github.com/BVE-Reborn/rend3.git" }
-wgpu = { version = "*", features = [] }
-intmap = { version = "*" }
-pollster = { version = "*" }
+egui = { version = "0.17.0", features = ["convert_bytemuck", "default_fonts"] }
+wgpu = {version = "*", git = "https://github.com/gfx-rs/wgpu.git"}
+
+[dev-dependencies]
+pollster = "0.2"

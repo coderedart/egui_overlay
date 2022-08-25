@@ -1,56 +1,41 @@
-use egui::{Event, Key, PointerButton, Pos2, RawInput};
+use crate::GlfwWindow;
+use egui::{Event, Key, PointerButton, Pos2, RawInput, Vec2};
 use glfw::Action;
-
-use glfw::WindowEvent;
-use std::sync::mpsc::Receiver;
-
-pub struct GlfwWindow {
-    pub glfw: glfw::Glfw,
-    pub events_receiver: Receiver<(f64, WindowEvent)>,
-    pub window: glfw::Window,
-    pub fb_size: [u32; 2],
-    pub scale: f32,
-    pub window_size: [f32; 2],
-    pub cursor_pos_physical_pixels: [f32; 2],
-    pub raw_input: RawInput,
-    pub frame_events: Vec<WindowEvent>,
-}
 
 impl GlfwWindow {
     pub fn new() -> Result<Self, String> {
         let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS)
             .map_err(|_| "failed to initialize glfw".to_string())?;
         glfw.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
+
         glfw.window_hint(glfw::WindowHint::Floating(true));
+
         glfw.window_hint(glfw::WindowHint::TransparentFramebuffer(true));
         glfw.window_hint(glfw::WindowHint::MousePassthrough(true));
 
         let (mut window, events) = glfw
             .create_window(800, 600, "Overlay Window", glfw::WindowMode::Windowed)
-            .ok_or_else(|| "failed to create window window".to_string())?;
+            .ok_or("failed to create window window".to_string())?;
 
         window.set_all_polling(true);
         window.set_store_lock_key_mods(true);
         let (width, height) = window.get_framebuffer_size();
         let scale = window.get_content_scale();
         let cursor_position = window.get_cursor_pos();
-        let (lw, lh) = window.get_size();
-        let window_size = [lw as f32, lh as f32];
         Ok(GlfwWindow {
             glfw,
             events_receiver: events,
             window,
-            fb_size: [
+            size_physical_pixels: [
                 width.try_into().map_err(|_| "width not u32".to_string())?,
                 height
                     .try_into()
                     .map_err(|_| "height not u32".to_string())?,
             ],
-            scale: scale.0,
+            scale: [scale.0, scale.1],
             cursor_pos_physical_pixels: [cursor_position.0 as f32, cursor_position.1 as f32],
             raw_input: RawInput::default(),
             frame_events: vec![],
-            window_size,
         })
     }
     pub fn tick(&mut self) {
@@ -61,12 +46,12 @@ impl GlfwWindow {
 
         let mut input = RawInput {
             time: Some(self.glfw.get_time()),
-            pixels_per_point: Some(self.scale),
+            pixels_per_point: Some(self.scale[0]),
             screen_rect: Some(egui::Rect::from_two_pos(
                 Default::default(),
                 [
-                    self.fb_size[0] as f32 / self.scale,
-                    self.fb_size[1] as f32 / self.scale,
+                    self.size_physical_pixels[0] as f32 / self.scale[0],
+                    self.size_physical_pixels[1] as f32 / self.scale[1],
                 ]
                 .into(),
             )),
@@ -76,8 +61,8 @@ impl GlfwWindow {
             self.cursor_pos_physical_pixels = cursor_position;
             input.events.push(Event::PointerMoved(
                 [
-                    cursor_position[0] / self.scale,
-                    cursor_position[1] / self.scale,
+                    cursor_position[0] / self.scale[0],
+                    cursor_position[1] / self.scale[1],
                 ]
                 .into(),
             ))
@@ -90,15 +75,19 @@ impl GlfwWindow {
             self.frame_events.push(event.clone());
             if let Some(ev) = match event {
                 glfw::WindowEvent::FramebufferSize(w, h) => {
-                    self.fb_size = [w as u32, h as u32];
+                    self.size_physical_pixels = [w as u32, h as u32];
+                    input.screen_rect = Some(egui::Rect::from_two_pos(
+                        Default::default(),
+                        [w as f32 / self.scale[0], h as f32 / self.scale[1]].into(),
+                    ));
 
                     None
                 }
                 glfw::WindowEvent::MouseButton(mb, a, m) => {
                     let emb = Event::PointerButton {
                         pos: Pos2 {
-                            x: cursor_position[0] / self.scale,
-                            y: cursor_position[1] / self.scale,
+                            x: cursor_position[0] / self.scale[0],
+                            y: cursor_position[1] / self.scale[1],
                         },
                         button: glfw_to_egui_pointer_button(mb),
                         pressed: glfw_to_egui_action(a),
@@ -145,9 +134,9 @@ impl GlfwWindow {
                     })
                 }),
                 glfw::WindowEvent::Char(c) => Some(Event::Text(c.to_string())),
-                glfw::WindowEvent::ContentScale(x, _) => {
+                glfw::WindowEvent::ContentScale(x, y) => {
                     input.pixels_per_point = Some(x);
-                    self.scale = x;
+                    self.scale = [x, y];
                     None
                 }
                 glfw::WindowEvent::Close => {
@@ -167,15 +156,7 @@ impl GlfwWindow {
                     None
                 }
 
-                WindowEvent::Size(w, h) => {
-                    self.window_size = [w as f32, h as f32];
-                    input.screen_rect = Some(egui::Rect::from_two_pos(
-                        Default::default(),
-                        [w as f32, h as f32].into(),
-                    ));
-                    None
-                }
-                _ => None,
+                _rest => None,
             } {
                 input.events.push(ev);
             }
@@ -238,37 +219,6 @@ fn glfw_to_egui_key(key: glfw::Key) -> Option<Key> {
         glfw::Key::PageDown => Some(Key::PageDown),
         glfw::Key::Home => Some(Key::Home),
         glfw::Key::End => Some(Key::End),
-        glfw::Key::F1 => Some(Key::F1),
-        glfw::Key::F2 => Some(Key::F2),
-        glfw::Key::F3 => Some(Key::F3),
-        glfw::Key::F4 => Some(Key::F4),
-        glfw::Key::F5 => Some(Key::F5),
-        glfw::Key::F6 => Some(Key::F6),
-        glfw::Key::F7 => Some(Key::F7),
-        glfw::Key::F8 => Some(Key::F8),
-        glfw::Key::F9 => Some(Key::F9),
-        glfw::Key::F10 => Some(Key::F10),
-        glfw::Key::F11 => Some(Key::F11),
-        glfw::Key::F12 => Some(Key::F12),
-        glfw::Key::F13 => Some(Key::F13),
-        glfw::Key::F14 => Some(Key::F14),
-        glfw::Key::F15 => Some(Key::F15),
-        glfw::Key::F16 => Some(Key::F16),
-        glfw::Key::F17 => Some(Key::F17),
-        glfw::Key::F18 => Some(Key::F18),
-        glfw::Key::F19 => Some(Key::F19),
-        glfw::Key::F20 => Some(Key::F20),
-        glfw::Key::Kp0 => Some(Key::Num0),
-        glfw::Key::Kp1 => Some(Key::Num1),
-        glfw::Key::Kp2 => Some(Key::Num2),
-        glfw::Key::Kp3 => Some(Key::Num3),
-        glfw::Key::Kp4 => Some(Key::Num4),
-        glfw::Key::Kp5 => Some(Key::Num5),
-        glfw::Key::Kp6 => Some(Key::Num6),
-        glfw::Key::Kp7 => Some(Key::Num7),
-        glfw::Key::Kp8 => Some(Key::Num8),
-        glfw::Key::Kp9 => Some(Key::Num9),
-
         _ => None,
     }
 }
@@ -285,12 +235,9 @@ pub fn glfw_to_egui_modifers(modifiers: glfw::Modifiers) -> egui::Modifiers {
 
 pub fn glfw_to_egui_pointer_button(mb: glfw::MouseButton) -> PointerButton {
     match mb {
-        // use aliases for clarity
-        glfw::MouseButtonLeft => PointerButton::Primary,
-        glfw::MouseButtonRight => PointerButton::Secondary,
-        glfw::MouseButtonMiddle => PointerButton::Middle,
-        glfw::MouseButton::Button4 => PointerButton::Extra1,
-        glfw::MouseButton::Button5 => PointerButton::Extra2,
+        glfw::MouseButton::Button1 => PointerButton::Primary,
+        glfw::MouseButton::Button2 => PointerButton::Secondary,
+        glfw::MouseButton::Button3 => PointerButton::Middle,
         _ => PointerButton::Secondary,
     }
 }
