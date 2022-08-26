@@ -1,39 +1,16 @@
-mod renderer_backend;
-mod window_backend;
+use egui_backend::{GfxBackend, UserApp, WindowBackend};
 
-use egui::{RawInput, TextureId};
-use glfw::WindowEvent;
-use std::collections::HashMap;
-use std::sync::mpsc::Receiver;
-use wgpu::{
-    BindGroup, BindGroupLayout, Device, Queue, Sampler, ShaderModule, SurfaceConfiguration,
-    SurfaceTexture, Texture, TextureView,
-};
+/// just impl the `UserApp<egui_window_glfw_passthrough::GlfwWindow, egui_render_wgpu::WgpuBackend>` trait
+/// for your App and pass it to this function. this will initialize the glfw window and wgpu backend.
+/// And enters the event loop running the `UserApp::run` fn that you implemented for your app.
+pub fn start_overlay(
+    app: impl UserApp<egui_window_glfw_passthrough::GlfwWindow, egui_render_wgpu::WgpuBackend> + 'static,
+) {
+    let (glfw_backend, window_info_for_gfx) = egui_window_glfw_passthrough::GlfwWindow::new(
+        Default::default(),
+        egui_backend::GfxApiConfig::Vulkan {},
+    );
+    let wgpu_backend = egui_render_wgpu::WgpuBackend::new(window_info_for_gfx, Default::default());
 
-pub struct GlfwWindow {
-    pub glfw: glfw::Glfw,
-    pub events_receiver: Receiver<(f64, WindowEvent)>,
-    pub window: glfw::Window,
-    pub size_physical_pixels: [u32; 2],
-    pub scale: [f32; 2],
-    pub cursor_pos_physical_pixels: [f32; 2],
-    pub raw_input: RawInput,
-    pub frame_events: Vec<WindowEvent>,
-}
-pub struct WgpuRenderer {
-    pub egui_state: EguiState,
-    pub textures: HashMap<TextureId, (Texture, TextureView, BindGroup)>,
-    pub egui_linear_bindgroup_layout: BindGroupLayout,
-    pub egui_linear_sampler: Sampler,
-    pub framebuffer_and_view: Option<(SurfaceTexture, TextureView)>,
-    pub surface: wgpu::Surface,
-    pub config: SurfaceConfiguration,
-    pub queue: Queue,
-    pub device: Device,
-}
-pub struct EguiState {
-    pub pipeline: wgpu::RenderPipeline,
-    pub pipeline_layout: wgpu::PipelineLayout,
-    pub bindgroup_layout: BindGroupLayout,
-    pub shader_module: ShaderModule,
+    glfw_backend.run_event_loop(wgpu_backend, app);
 }
