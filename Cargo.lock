@@ -237,9 +237,9 @@ dependencies = [
 
 [[package]]
 name = "egui_backend"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a33c2d41e235df0ac27d295717abd5012ab47b885cb6e75e4c9b82af7172177"
+checksum = "472cd1787d2aa767334bc160ea4dc2ed47964bf412c2b07299857e8595159268"
 dependencies = [
  "egui",
  "raw-window-handle",
@@ -247,7 +247,7 @@ dependencies = [
 
 [[package]]
 name = "egui_overlay"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "egui_backend",
  "egui_render_wgpu",
@@ -256,12 +256,13 @@ dependencies = [
 
 [[package]]
 name = "egui_render_wgpu"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2627153b00a4a5fa45923b988fdf88c13388fe987b7c47ddd3abc15a17be9010"
+checksum = "7024204d83fab2b78b9924f6dc46cc9fe7798731f3fa6269c007210a5d06be5e"
 dependencies = [
  "bytemuck",
  "egui_backend",
+ "getrandom",
  "intmap",
  "pollster",
  "wgpu",
@@ -269,9 +270,9 @@ dependencies = [
 
 [[package]]
 name = "egui_window_glfw_passthrough"
-version = "0.1.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adf8b135ba1e9e990d664caa6e7ab75b78a558bbb754e7b9af9c3d0d576d13f0"
+checksum = "e62e7def4a901d11283a7f15621532878e48e8a5dd0e5506d5a32c7e11dfb8a5"
 dependencies = [
  "egui_backend",
  "glfw-passthrough",
@@ -332,8 +333,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4eb1a864a501629691edf6c15a593b7a51eebaa1e8468e9ddc623de7c9b58ec6"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]
