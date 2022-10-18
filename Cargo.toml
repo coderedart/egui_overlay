@@ -10,4 +10,4 @@ repository = "https://github.com/coderedart/egui_overlay.git"
 [dependencies]
 egui_backend = { version = "0.2.0" }
 egui_window_glfw_passthrough = { version = "0.2.1" }
-egui_render_wgpu = { version = "0.2.0" }
+egui_render_wgpu = { version = "0.3.0" }
