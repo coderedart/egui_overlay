@@ -13,4 +13,4 @@ For advanced usecases, i recommend directly using `egui_window_glfw_passthrough`
 
 Look at the `hello` example for a rough idea of how to use this crate.
 
-![](https://imgur.com/u9PdJTQ)
+![](example.mp4)
