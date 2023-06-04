@@ -1,23 +1,61 @@
 use egui_backend::{egui::DragValue, WindowBackend};
 use egui_overlay::EguiOverlay;
-use egui_render_three_d::ThreeDBackend;
+use egui_render_three_d::{
+    three_d::{self, ColorMaterial, Gm, Mesh},
+    ThreeDBackend,
+};
 
 fn main() {
     egui_overlay::start(HelloWorld {
         text: "hello world".to_string(),
+        model: None,
     });
 }
 
 pub struct HelloWorld {
     pub text: String,
+    pub model: Option<Gm<Mesh, ColorMaterial>>,
 }
 impl EguiOverlay for HelloWorld {
     fn gui_run(
         &mut self,
         egui_context: &egui_backend::egui::Context,
-        _three_d_backend: &mut ThreeDBackend,
+        three_d_backend: &mut ThreeDBackend,
         glfw_backend: &mut egui_window_glfw_passthrough::GlfwBackend,
     ) {
+        use three_d::*;
+        // create model if not yet created
+        self.model
+            .get_or_insert_with(|| create_triangle_model(&three_d_backend.context));
+        // draw model
+        if let Some(model) = &mut self.model {
+            // Create a camera
+            let camera = three_d::Camera::new_perspective(
+                Viewport::new_at_origo(
+                    glfw_backend.framebuffer_size_physical[0],
+                    glfw_backend.framebuffer_size_physical[1],
+                ),
+                vec3(0.0, 0.0, 2.0),
+                vec3(0.0, 0.0, 0.0),
+                vec3(0.0, 1.0, 0.0),
+                degrees(45.0),
+                0.1,
+                10.0,
+            );
+            // Update the animation of the triangle
+            model.animate(glfw_backend.glfw.get_time() as _);
+
+            // Get the screen render target to be able to render something on the screen
+            egui_render_three_d::three_d::RenderTarget::<'_>::screen(
+                &three_d_backend.context,
+                glfw_backend.framebuffer_size_physical[0],
+                glfw_backend.framebuffer_size_physical[1],
+            )
+            // Clear the color and depth of the screen render target. use transparent color.
+            .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 0.0, 1.0))
+            // Render the triangle with the color material which uses the per vertex colors defined at construction
+            .render(&camera, std::iter::once(model), &[]);
+        }
         egui_backend::egui::Window::new("hello window").show(egui_context, |ui| {
             ui.text_edit_multiline(&mut self.text);
         });
@@ -70,4 +108,35 @@ impl EguiOverlay for HelloWorld {
         }
         egui_context.request_repaint();
     }
+}
+
+fn create_triangle_model(three_d_context: &three_d::Context) -> Gm<Mesh, ColorMaterial> {
+    use three_d::*;
+
+    // Create a CPU-side mesh consisting of a single colored triangle
+    let positions = vec![
+        vec3(0.5, -0.5, 0.0),  // bottom right
+        vec3(-0.5, -0.5, 0.0), // bottom left
+        vec3(0.0, 0.5, 0.0),   // top
+    ];
+    let colors = vec![
+        Color::RED,   // bottom right
+        Color::GREEN, // bottom left
+        Color::BLUE,  // top
+    ];
+    let cpu_mesh = CpuMesh {
+        positions: Positions::F32(positions),
+        colors: Some(colors),
+        ..Default::default()
+    };
+
+    // Construct a model, with a default color material, thereby transferring the mesh data to the GPU
+    let mut model = Gm::new(
+        Mesh::new(&three_d_context, &cpu_mesh),
+        ColorMaterial::default(),
+    );
+
+    // Add an animation to the triangle.
+    model.set_animation(|time| Mat4::from_angle_y(radians(time * 0.005)));
+    model
 }
