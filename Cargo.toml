@@ -1,13 +1,12 @@
 [package]
 name = "egui_overlay"
-version = "0.2.3"
+version = "0.4.0"
 edition = "2021"
 license = "MIT"
 description = "Egui integration to easily create Desktop Overlays"
 repository = "https://github.com/coderedart/egui_overlay.git"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui_backend = { version = "0.2.0" }
-egui_window_glfw_passthrough = { version = "0.2.1" }
-egui_render_wgpu = { version = "0.2.0" }
+egui_backend = "0.4"
+egui_window_glfw_passthrough = "0.4"
+egui_render_three_d = "0.4"
