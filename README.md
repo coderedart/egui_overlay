@@ -13,4 +13,7 @@ For advanced usecases, i recommend directly using `egui_window_glfw_passthrough`
 
 Look at the `hello` example for a rough idea of how to use this crate.
 
-![](example.mp4)
+
+
+https://github.com/coderedart/egui_overlay/assets/24411704/9f7bab7b-26ec-47d1-b51e-74006dfa7b0d
+
