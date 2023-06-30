@@ -1,3 +1,4 @@
 /target
 /.idea
 /egui_overlay.iml
+/Cargo.lock
