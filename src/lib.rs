@@ -1,9 +1,15 @@
 pub use egui_backend;
 pub use egui_backend::egui;
 use egui_backend::{egui::Context, BackendConfig, GfxBackend, UserApp, WindowBackend};
+
+#[cfg(not(target_os = "macos"))]
 pub use egui_render_three_d;
 #[cfg(not(target_os = "macos"))]
 use egui_render_three_d::ThreeDBackend as DefaultGfxBackend;
+
+// mac doesn't support opengl. so, use wgpu.
+#[cfg(target_os = "macos")]
+pub use egui_render_wgpu;
 #[cfg(target_os = "macos")]
 use egui_render_wgpu::WgpuBackend as DefaultGfxBackend;
 

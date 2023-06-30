@@ -8,10 +8,12 @@ Here, we will let input passthrough when egui doesn't need input.
 
 The project itself builds upon the `egui_backend` crate while using `egui_window_glfw_passthrough` for windowing functionality. 
 For rendering, we use `egui_render_three_d`, as `three-d` will allow you to draw a bunch of things easily. 
+But, as apple doesn't support opengl, we use `egui_render_wgpu` on macos.
 
 For advanced usecases, i recommend directly using `egui_window_glfw_passthrough` from https://github.com/coderedart/etk
 
-Look at the `hello` example for a rough idea of how to use this crate.
+Look at the `basic` example for a rough idea of how to use this crate for normal usecase.
+Look at the `triangle` example (only for linux/windows users), to see how you can draw custom stuff too, while using this overlay.
 
 
 
