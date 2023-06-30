@@ -2,7 +2,11 @@ pub use egui_backend;
 pub use egui_backend::egui;
 use egui_backend::{egui::Context, BackendConfig, GfxBackend, UserApp, WindowBackend};
 pub use egui_render_three_d;
-use egui_render_three_d::ThreeDBackend;
+#[cfg(not(target_os = "macos"))]
+use egui_render_three_d::ThreeDBackend as DefaultGfxBackend;
+#[cfg(target_os = "macos")]
+use egui_render_wgpu::WgpuBackend as DefaultGfxBackend;
+
 pub use egui_window_glfw_passthrough;
 use egui_window_glfw_passthrough::{GlfwBackend, GlfwConfig};
 /// After implementing [`EguiOverlay`], just call this function with your app data
@@ -18,18 +22,21 @@ pub fn start<T: EguiOverlay + 'static>(user_data: T) {
             ..Default::default()
         },
         BackendConfig {
+            #[cfg(not(target_os = "macos"))]
             is_opengl: true,
+            #[cfg(target_os = "macos")]
+            is_opengl: false,
             opengl_config: Default::default(),
             transparent: Some(true),
         },
     );
     glfw_backend.set_always_on_top(true);
     glfw_backend.window.set_decorated(false);
-    let three_d_backend = ThreeDBackend::new(&mut glfw_backend, Default::default());
+    let default_gfx_backend = DefaultGfxBackend::new(&mut glfw_backend, Default::default());
     let overlap_app = OverlayApp {
         user_data,
         egui_context: Default::default(),
-        three_d_backend,
+        default_gfx_backend,
         glfw_backend,
     };
     GlfwBackend::run_event_loop(overlap_app);
@@ -39,21 +46,21 @@ pub trait EguiOverlay {
     fn gui_run(
         &mut self,
         egui_context: &Context,
-        three_d_backend: &mut ThreeDBackend,
+        default_gfx_backend: &mut DefaultGfxBackend,
         glfw_backend: &mut GlfwBackend,
     );
 }
 pub struct OverlayApp<T: EguiOverlay> {
     pub user_data: T,
     pub egui_context: Context,
-    pub three_d_backend: ThreeDBackend,
+    pub default_gfx_backend: DefaultGfxBackend,
     pub glfw_backend: GlfwBackend,
 }
 
 impl<T: EguiOverlay> OverlayApp<T> {}
 
 impl<T: EguiOverlay> UserApp for OverlayApp<T> {
-    type UserGfxBackend = ThreeDBackend;
+    type UserGfxBackend = DefaultGfxBackend;
 
     type UserWindowBackend = GlfwBackend;
 
@@ -66,7 +73,7 @@ impl<T: EguiOverlay> UserApp for OverlayApp<T> {
     ) {
         (
             &mut self.glfw_backend,
-            &mut self.three_d_backend,
+            &mut self.default_gfx_backend,
             &self.egui_context,
         )
     }
@@ -75,7 +82,7 @@ impl<T: EguiOverlay> UserApp for OverlayApp<T> {
         let OverlayApp {
             user_data,
             egui_context,
-            three_d_backend: wgpu_backend,
+            default_gfx_backend: wgpu_backend,
             glfw_backend,
         } = self;
         user_data.gui_run(egui_context, wgpu_backend, glfw_backend);
