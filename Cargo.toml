@@ -16,3 +16,6 @@ egui_render_three_d = "0.4"
 # because opengl doesn't work on mac :((
 [target.'cfg(target_os = "macos")'.dependencies]
 egui_render_wgpu = { version = "0.4" }
+
+[dev-dependencies]
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
