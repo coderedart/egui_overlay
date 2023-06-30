@@ -30,6 +30,7 @@ impl EguiOverlay for HelloWorld {
         _default_gfx_backend: &mut DefaultGfxBackend,
         glfw_backend: &mut egui_window_glfw_passthrough::GlfwBackend,
     ) {
+        let cursor_pos = egui_context.pointer_latest_pos().unwrap_or_default();
         // just some controls to show how you can use glfw_backend
         egui_backend::egui::Window::new("controls").show(egui_context, |ui| {
             // sometimes, you want to see the borders to understand where the overlay is.
@@ -46,6 +47,10 @@ impl EguiOverlay for HelloWorld {
             ui.label(format!(
                 "cursor pos: x: {}, y: {}",
                 glfw_backend.cursor_pos[0], glfw_backend.cursor_pos[1]
+            ));
+            ui.label(format!(
+                "egui cursor pos: x: {}, y: {}",
+                cursor_pos.x, cursor_pos.y
             ));
             ui.label(format!(
                 "passthrough: {}",
