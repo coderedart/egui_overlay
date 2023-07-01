@@ -30,36 +30,30 @@ impl EguiOverlay for HelloWorld {
         _default_gfx_backend: &mut DefaultGfxBackend,
         glfw_backend: &mut egui_window_glfw_passthrough::GlfwBackend,
     ) {
-        let cursor_pos = egui_context.pointer_latest_pos().unwrap_or_default();
         // just some controls to show how you can use glfw_backend
         egui_backend::egui::Window::new("controls").show(egui_context, |ui| {
+            ui.set_width(300.0);
             // sometimes, you want to see the borders to understand where the overlay is.
             let mut borders = glfw_backend.window.is_decorated();
             if ui.checkbox(&mut borders, "window borders").changed() {
                 glfw_backend.window.set_decorated(borders);
             }
-            let window_pos = glfw_backend.get_window_position().unwrap();
+
             ui.label(format!(
-                "window pos: x: {}, y: {}",
-                window_pos[0], window_pos[1]
+                "pixels_per_virtual_unit: {}",
+                glfw_backend.physical_pixels_per_virtual_unit
             ));
             ui.label(format!("window scale: {}", glfw_backend.scale));
-            ui.label(format!(
-                "cursor pos: x: {}, y: {}",
-                glfw_backend.cursor_pos[0], glfw_backend.cursor_pos[1]
-            ));
-            ui.label(format!(
-                "egui cursor pos: x: {}, y: {}",
-                cursor_pos.x, cursor_pos.y
-            ));
+            ui.label(format!("cursor pos x: {}", glfw_backend.cursor_pos[0]));
+            ui.label(format!("cursor pos y: {}", glfw_backend.cursor_pos[1]));
+
             ui.label(format!(
                 "passthrough: {}",
                 glfw_backend.get_passthrough().unwrap()
             ));
             // how to change size.
             // WARNING: don't use drag value, because window size changing while dragging ui messes things up.
-            let size = glfw_backend.window.get_size();
-            let mut size = [size.0 as f32, size.1 as f32];
+            let mut size = glfw_backend.window_size_logical;
             let mut changed = false;
             ui.horizontal(|ui| {
                 ui.label("width: ");
