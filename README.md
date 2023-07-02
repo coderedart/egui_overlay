@@ -26,3 +26,5 @@ https://github.com/coderedart/egui_overlay/assets/24411704/9f7bab7b-26ec-47d1-b5
 2. Linux (both X11 and Wayland). But support might vary between different window managers.
 3. Mac
 
+## Bugs
+1. On Mac, when passthrough is enabled, the window titlebar can only be clicked in the bottom half. The top half becomes passthrough too for some reason.
