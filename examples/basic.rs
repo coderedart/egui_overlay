@@ -15,13 +15,11 @@ fn main() {
         )
         .init();
 
-    egui_overlay::start(HelloWorld {
-        text: "hello world".to_string(),
-    });
+    egui_overlay::start(HelloWorld { frame: 0 });
 }
 
 pub struct HelloWorld {
-    pub text: String,
+    pub frame: u64,
 }
 impl EguiOverlay for HelloWorld {
     fn gui_run(
@@ -33,6 +31,8 @@ impl EguiOverlay for HelloWorld {
         // just some controls to show how you can use glfw_backend
         egui_backend::egui::Window::new("controls").show(egui_context, |ui| {
             ui.set_width(300.0);
+            self.frame += 1;
+            ui.label(format!("current frame number: {}", self.frame));
             // sometimes, you want to see the borders to understand where the overlay is.
             let mut borders = glfw_backend.window.is_decorated();
             if ui.checkbox(&mut borders, "window borders").changed() {
