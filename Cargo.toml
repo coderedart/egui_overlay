@@ -6,16 +6,37 @@ license = "MIT"
 description = "Egui integration to easily create Desktop Overlays"
 repository = "https://github.com/coderedart/egui_overlay.git"
 
+[features]
+default = ["egui/default"]
 [dependencies]
-egui_backend = "0.4"
-egui_window_glfw_passthrough = "0.4"
+egui_window_glfw_passthrough = { version = "0.4", path = "crates/egui_window_glfw_passthrough" }
+egui = { workspace = true }
+tracing = { workspace = true }
+raw-window-handle = { workspace = true }
+
 
 [target.'cfg(not(target_os = "macos"))'.dependencies]
-egui_render_three_d = "0.4"
+egui_render_three_d = { version = "0.4", path = "crates/egui_render_three_d" }
 
 # because opengl doesn't work on mac :((
 [target.'cfg(target_os = "macos")'.dependencies]
-egui_render_wgpu = { version = "0.4" }
+egui_render_wgpu = { version = "0.4", path = "crates/egui_render_wgpu" }
 
 [dev-dependencies]
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+egui = { workspace = true }
+
+
+[workspace.dependencies]
+egui = { version = "0.23", default-features = false }
+bytemuck = { version = "*", default-features = false }
+tracing = { version = "*", default-features = false }
+raw-window-handle = { version = "0.5" }
+
+[workspace]
+members = [
+    "crates/egui_render_three_d",
+    "crates/egui_render_glow",
+    "crates/egui_render_wgpu",
+    "crates/egui_window_glfw_passthrough",
+]

@@ -1,4 +1,4 @@
-use egui_backend::{egui::DragValue, WindowBackend};
+use egui::DragValue;
 use egui_overlay::EguiOverlay;
 use egui_render_three_d::{
     three_d::{self, ColorMaterial, Gm, Mesh},
@@ -19,7 +19,7 @@ pub struct HelloWorld {
 impl EguiOverlay for HelloWorld {
     fn gui_run(
         &mut self,
-        egui_context: &egui_backend::egui::Context,
+        egui_context: &egui::Context,
         three_d_backend: &mut ThreeDBackend,
         glfw_backend: &mut egui_window_glfw_passthrough::GlfwBackend,
     ) {
@@ -56,12 +56,12 @@ impl EguiOverlay for HelloWorld {
             // Render the triangle with the color material which uses the per vertex colors defined at construction
             .render(&camera, std::iter::once(model), &[]);
         }
-        egui_backend::egui::Window::new("hello window").show(egui_context, |ui| {
+        egui::Window::new("hello window").show(egui_context, |ui| {
             ui.text_edit_multiline(&mut self.text);
         });
 
         // just some controls to show how you can use glfw_backend
-        egui_backend::egui::Window::new("controls").show(egui_context, |ui| {
+        egui::Window::new("controls").show(egui_context, |ui| {
             // sometimes, you want to see the borders to understand where the overlay is.
             if ui.button("toggle borders").clicked() {
                 let dec = glfw_backend.window.is_decorated();

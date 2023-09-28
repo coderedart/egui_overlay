@@ -1,51 +1,62 @@
-pub use egui_backend;
-pub use egui_backend::egui;
-use egui_backend::{egui::Context, BackendConfig, GfxBackend, UserApp, WindowBackend};
+use std::time::Duration;
 
+use egui::{Context, PlatformOutput};
 #[cfg(not(target_os = "macos"))]
 pub use egui_render_three_d;
 #[cfg(not(target_os = "macos"))]
 use egui_render_three_d::ThreeDBackend as DefaultGfxBackend;
-
 // mac doesn't support opengl. so, use wgpu.
 #[cfg(target_os = "macos")]
 pub use egui_render_wgpu;
 #[cfg(target_os = "macos")]
 use egui_render_wgpu::WgpuBackend as DefaultGfxBackend;
-
 pub use egui_window_glfw_passthrough;
 use egui_window_glfw_passthrough::{GlfwBackend, GlfwConfig};
+use raw_window_handle::HasRawWindowHandle;
+
 /// After implementing [`EguiOverlay`], just call this function with your app data
 pub fn start<T: EguiOverlay + 'static>(user_data: T) {
-    let mut glfw_backend = GlfwBackend::new(
-        GlfwConfig {
-            glfw_callback: Box::new(|gtx| {
-                (egui_window_glfw_passthrough::GlfwConfig::default().glfw_callback)(gtx);
-                gtx.window_hint(
-                    egui_window_glfw_passthrough::glfw::WindowHint::ScaleToMonitor(true),
-                );
-            }),
+    let mut glfw_backend = GlfwBackend::new(GlfwConfig {
+        glfw_callback: Box::new(|gtx| {
+            (egui_window_glfw_passthrough::GlfwConfig::default().glfw_callback)(gtx);
+            gtx.window_hint(egui_window_glfw_passthrough::glfw::WindowHint::ScaleToMonitor(true));
+        }),
+        #[cfg(not(target_os = "macos"))]
+        opengl_window: Some(true),
+        #[cfg(target_os = "macos")]
+        opengl_window: Some(true),
+        transparent_window: Some(true),
+        ..Default::default()
+    });
+    glfw_backend.window.set_floating(true);
+    glfw_backend.window.set_decorated(false);
+    let latest_size = glfw_backend.window.get_framebuffer_size();
+    let latest_size = [latest_size.0 as _, latest_size.1 as _];
+    let handle = glfw_backend.window.raw_window_handle();
+    #[cfg(not(target_os = "macos"))]
+    let default_gfx_backend = DefaultGfxBackend::new(
+        egui_render_three_d::ThreeDConfig {
             ..Default::default()
         },
-        BackendConfig {
-            #[cfg(not(target_os = "macos"))]
-            is_opengl: true,
-            #[cfg(target_os = "macos")]
-            is_opengl: false,
-            opengl_config: Default::default(),
-            transparent: Some(true),
-        },
+        |s| glfw_backend.get_proc_address(s),
+        handle,
+        latest_size,
     );
-    glfw_backend.set_always_on_top(true);
-    glfw_backend.window.set_decorated(false);
-    let default_gfx_backend = DefaultGfxBackend::new(&mut glfw_backend, Default::default());
+    #[cfg(target_os = "macos")]
+    let default_gfx_backend = DefaultGfxBackend::new(
+        egui_render_wgpu::WgpuConfig {
+            ..Default::default()
+        },
+        Some(&glfw.window),
+        latest_size,
+    );
     let overlap_app = OverlayApp {
         user_data,
         egui_context: Default::default(),
         default_gfx_backend,
         glfw_backend,
     };
-    GlfwBackend::run_event_loop(overlap_app);
+    overlap_app.enter_event_loop();
 }
 /// Implement this trait for your struct containing data you need. Then, call [`start`] fn with that data
 pub trait EguiOverlay {
@@ -55,6 +66,29 @@ pub trait EguiOverlay {
         default_gfx_backend: &mut DefaultGfxBackend,
         glfw_backend: &mut GlfwBackend,
     );
+    fn run(
+        &mut self,
+        egui_context: &Context,
+        default_gfx_backend: &mut DefaultGfxBackend,
+        glfw_backend: &mut GlfwBackend,
+    ) -> Option<(PlatformOutput, Duration)> {
+        let input = glfw_backend.take_raw_input();
+        default_gfx_backend.prepare_frame();
+        egui_context.begin_frame(input);
+        self.gui_run(egui_context, default_gfx_backend, glfw_backend);
+
+        let egui::FullOutput {
+            platform_output,
+            repaint_after,
+            textures_delta,
+            shapes,
+        } = egui_context.end_frame();
+        let meshes = egui_context.tessellate(shapes);
+
+        default_gfx_backend.render_egui(meshes, textures_delta, glfw_backend.window_size_logical);
+
+        Some((platform_output, repaint_after))
+    }
 }
 pub struct OverlayApp<T: EguiOverlay> {
     pub user_data: T,
@@ -63,34 +97,64 @@ pub struct OverlayApp<T: EguiOverlay> {
     pub glfw_backend: GlfwBackend,
 }
 
-impl<T: EguiOverlay> OverlayApp<T> {}
+impl<T: EguiOverlay> OverlayApp<T> {
+    pub fn enter_event_loop(mut self) {
+        // polls for events and returns if there's some activity.
+        // But if there is no event for the specified duration, it will return anyway.
+        // used by "reactive" apps which don't do anything unless there's some event.
+        tracing::info!("entering glfw event loop");
+        let mut wait_events_duration = std::time::Duration::ZERO;
+        let callback = move || {
+            let Self {
+                user_data,
+                egui_context,
+                default_gfx_backend,
+                glfw_backend,
+            } = &mut self;
+            glfw_backend
+                .glfw
+                .wait_events_timeout(wait_events_duration.as_secs_f64());
 
-impl<T: EguiOverlay> UserApp for OverlayApp<T> {
-    type UserGfxBackend = DefaultGfxBackend;
+            // gather events
+            glfw_backend.tick();
 
-    type UserWindowBackend = GlfwBackend;
+            if glfw_backend.resized_event_pending {
+                let latest_size = glfw_backend.window.get_framebuffer_size();
+                default_gfx_backend.resize_framebuffer([latest_size.0 as _, latest_size.1 as _]);
+                glfw_backend.resized_event_pending = false;
+            }
+            // run userapp gui function. let user do anything he wants with window or gfx backends
+            if let Some((platform_output, timeout)) =
+                user_data.run(&egui_context, default_gfx_backend, glfw_backend)
+            {
+                wait_events_duration = timeout.min(std::time::Duration::from_secs(1));
+                if !platform_output.copied_text.is_empty() {
+                    glfw_backend
+                        .window
+                        .set_clipboard_string(&platform_output.copied_text);
+                }
+                glfw_backend.set_cursor(platform_output.cursor_icon);
+            } else {
+                wait_events_duration = std::time::Duration::ZERO;
+            }
+            #[cfg(not(target_os = "emscripten"))]
+            glfw_backend.window.should_close()
+        };
 
-    fn get_all(
-        &mut self,
-    ) -> (
-        &mut Self::UserWindowBackend,
-        &mut Self::UserGfxBackend,
-        &egui::Context,
-    ) {
-        (
-            &mut self.glfw_backend,
-            &mut self.default_gfx_backend,
-            &self.egui_context,
-        )
-    }
+        // on emscripten, just keep calling forever i guess.
+        #[cfg(target_os = "emscripten")]
+        set_main_loop_callback(callback);
 
-    fn gui_run(&mut self) {
-        let OverlayApp {
-            user_data,
-            egui_context,
-            default_gfx_backend: wgpu_backend,
-            glfw_backend,
-        } = self;
-        user_data.gui_run(egui_context, wgpu_backend, glfw_backend);
+        #[cfg(not(target_os = "emscripten"))]
+        {
+            let mut callback = callback;
+            loop {
+                // returns if loop should close.
+                if callback() {
+                    tracing::warn!("event loop is exiting");
+                    break;
+                }
+            }
+        }
     }
 }

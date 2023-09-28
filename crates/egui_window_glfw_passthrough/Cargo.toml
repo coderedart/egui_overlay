@@ -1,0 +1,21 @@
+[package]
+name = "egui_window_glfw_passthrough"
+version = "0.4.2"
+edition = "2021"
+description = "egui windowing backend using Glfw"
+license = "MIT"
+
+[features]
+default = ["glfw/default"]
+all = ["glfw_sys", "vulkan", "wayland", "log", "image"]
+glfw_sys = ["glfw/glfw-sys-passthrough"]
+vulkan = ["glfw/vulkan"]
+wayland = ["glfw/wayland"]
+log = ["glfw/log"]
+image = ["glfw/image"]
+
+
+[dependencies]
+glfw = { version = "0.51.1", package = "glfw-passthrough", default-features = false }
+tracing = { workspace = true }
+egui = { workspace = true }

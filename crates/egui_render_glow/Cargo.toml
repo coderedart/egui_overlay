@@ -1,0 +1,21 @@
+[package]
+name = "egui_render_glow"
+version = "0.4.2"
+edition = "2021"
+description = "egui rendering backend using glow"
+license = "MIT"
+
+[dependencies]
+tracing = { workspace = true }
+bytemuck = { workspace = true }
+egui = { workspace = true, features = ["bytemuck"]}
+raw-window-handle = { workspace = true }
+glow = { version = "0.12" }
+
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))'.dependencies]
+wasm-bindgen = { version = "0.2" }
+web-sys = { version = "0.3" }
+getrandom = { version = "0.2", features = [
+    "js",
+] } # https://github.com/emilk/egui/issues/2009
+js-sys = { version = "0.3" }

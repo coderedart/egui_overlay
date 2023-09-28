@@ -1,4 +1,4 @@
-use egui_backend::{egui::DragValue, WindowBackend};
+use egui::DragValue;
 use egui_overlay::EguiOverlay;
 #[cfg(not(target_os = "macos"))]
 use egui_render_three_d::ThreeDBackend as DefaultGfxBackend;
@@ -24,12 +24,12 @@ pub struct HelloWorld {
 impl EguiOverlay for HelloWorld {
     fn gui_run(
         &mut self,
-        egui_context: &egui_backend::egui::Context,
+        egui_context: &egui::Context,
         _default_gfx_backend: &mut DefaultGfxBackend,
         glfw_backend: &mut egui_window_glfw_passthrough::GlfwBackend,
     ) {
         // just some controls to show how you can use glfw_backend
-        egui_backend::egui::Window::new("controls").show(egui_context, |ui| {
+        egui::Window::new("controls").show(egui_context, |ui| {
             ui.set_width(300.0);
             self.frame += 1;
             ui.label(format!("current frame number: {}", self.frame));
@@ -49,7 +49,7 @@ impl EguiOverlay for HelloWorld {
 
             ui.label(format!(
                 "passthrough: {}",
-                glfw_backend.get_passthrough().unwrap()
+                glfw_backend.window.is_mouse_passthrough()
             ));
             // how to change size.
             // WARNING: don't use drag value, because window size changing while dragging ui messes things up.
