@@ -6,16 +6,15 @@ In this context, Overlay simply means a gui application where
 
 Here, we will let input passthrough when egui doesn't need input. 
 
-The project itself builds upon the `egui_backend` crate while using `egui_window_glfw_passthrough` for windowing functionality. 
-
+The `egui_overlay` crate just combines the functionality from `egui_window_glfw_passthrough` for windowing functionality. 
 For rendering, we use `egui_render_three_d`, as `three-d` will allow you to draw a bunch of things easily. 
 But, as apple doesn't support opengl, we use `egui_render_wgpu` on macos.
 
-For advanced usecases, i recommend directly using `egui_window_glfw_passthrough` from https://github.com/coderedart/etk
+For advanced usecases, i recommend directly using `egui_window_glfw_passthrough` crate directly with either wgpu or three-d or glow backend crates.
+As you can see in `lib.rs`, its barely 150 lines of code to set up. It will allow you more control over event loop, as well as drawing.
 
 Look at the `basic` example for a rough idea of how to use this crate for normal usecase.
-
-Look at the `triangle` example (only for linux/windows users), to see how you can draw custom stuff too.
+Look at the `triangle` example (only for linux/windows users, as i use three-d), to see how you can draw custom stuff too.
 
 
 

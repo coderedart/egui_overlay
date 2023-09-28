@@ -118,7 +118,7 @@ impl GlowBackend {
         }
     }
 
-    pub fn clear_frame(&mut self) {
+    pub fn prepare_frame(&mut self, _latest_fb_size: [u32; 2]) {
         unsafe {
             self.glow_context.clear(glow::COLOR_BUFFER_BIT);
         }
@@ -249,7 +249,6 @@ impl Painter {
     pub unsafe fn prepare_render(
         &mut self,
         glow_context: &glow::Context,
-
         meshes: Vec<egui::ClippedPrimitive>,
         textures_delta: TexturesDelta,
         logical_screen_size: [f32; 2],

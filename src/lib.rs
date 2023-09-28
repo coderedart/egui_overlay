@@ -73,7 +73,7 @@ pub trait EguiOverlay {
         glfw_backend: &mut GlfwBackend,
     ) -> Option<(PlatformOutput, Duration)> {
         let input = glfw_backend.take_raw_input();
-        default_gfx_backend.prepare_frame();
+        default_gfx_backend.prepare_frame(glfw_backend.framebuffer_size_physical);
         egui_context.begin_frame(input);
         self.gui_run(egui_context, default_gfx_backend, glfw_backend);
 
@@ -86,7 +86,14 @@ pub trait EguiOverlay {
         let meshes = egui_context.tessellate(shapes);
 
         default_gfx_backend.render_egui(meshes, textures_delta, glfw_backend.window_size_logical);
-
+        if glfw_backend.is_opengl() {
+            use egui_window_glfw_passthrough::glfw::Context;
+            glfw_backend.window.swap_buffers();
+        } else {
+            // for wgpu backend
+            #[cfg(target_os = "macos")]
+            default_gfx_backend.present()
+        }
         Some((platform_output, repaint_after))
     }
 }
@@ -125,7 +132,7 @@ impl<T: EguiOverlay> OverlayApp<T> {
             }
             // run userapp gui function. let user do anything he wants with window or gfx backends
             if let Some((platform_output, timeout)) =
-                user_data.run(&egui_context, default_gfx_backend, glfw_backend)
+                user_data.run(egui_context, default_gfx_backend, glfw_backend)
             {
                 wait_events_duration = timeout.min(std::time::Duration::from_secs(1));
                 if !platform_output.copied_text.is_empty() {

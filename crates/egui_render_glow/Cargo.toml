@@ -1,6 +1,6 @@
 [package]
 name = "egui_render_glow"
-version = "0.4.2"
+version = "0.5.0"
 edition = "2021"
 description = "egui rendering backend using glow"
 license = "MIT"
