@@ -1,6 +1,6 @@
 [package]
 name = "egui_render_wgpu"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 description = "egui rendering backend using wgpu"
 license = "MIT"

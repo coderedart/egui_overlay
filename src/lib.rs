@@ -73,7 +73,12 @@ pub trait EguiOverlay {
         glfw_backend: &mut GlfwBackend,
     ) -> Option<(PlatformOutput, Duration)> {
         let input = glfw_backend.take_raw_input();
-        default_gfx_backend.prepare_frame(glfw_backend.framebuffer_size_physical);
+        // takes a closure that can provide latest framebuffer size.
+        // because some backends like vulkan/wgpu won't work without reconfiguring the surface after some sort of resize event unless you give it the latest size
+        default_gfx_backend.prepare_frame(|| {
+            let latest_size = glfw_backend.window.get_framebuffer_size();
+            [latest_size.0 as _, latest_size.1 as _]
+        });
         egui_context.begin_frame(input);
         self.gui_run(egui_context, default_gfx_backend, glfw_backend);
 

@@ -118,7 +118,7 @@ impl GlowBackend {
         }
     }
 
-    pub fn prepare_frame(&mut self, _latest_fb_size: [u32; 2]) {
+    pub fn prepare_frame(&mut self, _latest_framebuffer_size_getter: impl FnMut() -> [u32; 2]) {
         unsafe {
             self.glow_context.clear(glow::COLOR_BUFFER_BIT);
         }

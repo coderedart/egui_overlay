@@ -187,9 +187,9 @@ impl WgpuBackend {
         );
     }
 
-    pub fn prepare_frame(&mut self, latest_fb_size: [u32; 2]) {
+    pub fn prepare_frame(&mut self, latest_framebuffer_size_getter: impl FnMut() -> [u32; 2]) {
         self.surface_manager
-            .create_current_surface_texture_view(latest_fb_size, &self.device);
+            .create_current_surface_texture_view(latest_framebuffer_size_getter, &self.device);
         if let Some(view) = self.surface_manager.surface_view.as_ref() {
             let mut ce = self
                 .device

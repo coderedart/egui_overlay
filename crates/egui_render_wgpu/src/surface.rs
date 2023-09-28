@@ -55,11 +55,12 @@ impl SurfaceManager {
     }
     pub fn create_current_surface_texture_view(
         &mut self,
-        latest_fb_size: [u32; 2],
+        mut latest_framebuffer_size_getter: impl FnMut() -> [u32; 2],
         device: &Device,
     ) {
         if let Some(surface) = self.surface.as_ref() {
             let current_surface_image = surface.get_current_texture().unwrap_or_else(|_| {
+                let latest_fb_size = latest_framebuffer_size_getter();
                 self.surface_config.width = latest_fb_size[0];
                 self.surface_config.height = latest_fb_size[1];
                 surface.configure(device, &self.surface_config);

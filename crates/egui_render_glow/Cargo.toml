@@ -1,6 +1,6 @@
 [package]
 name = "egui_render_glow"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 description = "egui rendering backend using glow"
 license = "MIT"
@@ -8,7 +8,7 @@ license = "MIT"
 [dependencies]
 tracing = { workspace = true }
 bytemuck = { workspace = true }
-egui = { workspace = true, features = ["bytemuck"]}
+egui = { workspace = true, features = ["bytemuck"] }
 raw-window-handle = { workspace = true }
 glow = { version = "0.12" }
 
