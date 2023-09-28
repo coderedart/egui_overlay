@@ -12,4 +12,4 @@ pollster = { version = "0.3" }
 tracing = { version = "0.1" }
 bytemuck = { workspace = true }
 raw-window-handle = { workspace = true }
-egui = { workspace = true }
+egui = { workspace = true, features = ["bytemuck"] }
