@@ -46,7 +46,8 @@ impl ThreeDBackend {
         }
     }
     pub fn prepare_frame(&mut self, latest_framebuffer_size_getter: impl FnMut() -> [u32; 2]) {
-        self.glow_backend.prepare_frame(latest_framebuffer_size_getter);
+        self.glow_backend
+            .prepare_frame(latest_framebuffer_size_getter);
     }
     pub fn render_egui(
         &mut self,

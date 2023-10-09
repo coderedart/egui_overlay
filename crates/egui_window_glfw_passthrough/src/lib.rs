@@ -10,6 +10,7 @@ use glfw::StandardCursor;
 use glfw::WindowEvent;
 use glfw::WindowHint;
 use std::sync::mpsc::Receiver;
+use tracing::info;
 /// This is the window backend for egui using [`glfw`]
 /// Most of the startup configuration is done inside [`default_glfw_callback()`] and [`default_window_callback()`]
 /// These are passed to the `new` function using [`GlfwConfig`].
@@ -44,6 +45,7 @@ pub struct GlfwBackend {
     pub window_size_logical: [f32; 2],
     /// in physical pixels
     pub framebuffer_size_physical: [u32; 2],
+    pub window_position: [i32; 2],
     /// ratio between pixels and virtual units
     pub physical_pixels_per_virtual_unit: f32,
     /// ratio between logical points and physical pixels
@@ -197,6 +199,8 @@ impl GlfwBackend {
         );
 
         let size_physical_pixels = [physical_width as u32, physical_height as u32];
+        let position = window.get_pos();
+        let window_position = [position.0, position.1];
         // set raw input screen rect details so that first frame
         // will have correct size even without any resize event
         let raw_input = RawInput {
@@ -238,6 +242,7 @@ impl GlfwBackend {
                 virtual_height.try_into().unwrap(),
             ],
             physical_pixels_per_virtual_unit: pixels_per_virtual_unit,
+            window_position,
         }
     }
 
@@ -329,7 +334,6 @@ impl GlfwBackend {
 
             if let Some(ev) = match event {
                 glfw::WindowEvent::FramebufferSize(width, height) => {
-                    tracing::info!("framebuffer physical size changed to {width},{height}");
                     self.framebuffer_size_physical = [width as u32, height as u32];
                     self.resized_event_pending = true;
                     let (virtual_width, virtual_height) = self.window.get_size();
@@ -359,12 +363,29 @@ impl GlfwBackend {
                         Default::default(),
                         self.window_size_logical.into(),
                     ));
+
+                    tracing::info!(
+                        width,
+                        height,
+                        logical_width,
+                        logical_height,
+                        self.scale,
+                        "framebuffer size changed"
+                    );
                     None
                 }
                 glfw::WindowEvent::Size(width, height) => {
-                    tracing::info!("window virtual size: width {width} height {height}");
                     let (physical_width, physical_height) = self.window.get_framebuffer_size();
                     self.physical_pixels_per_virtual_unit = physical_width as f32 / width as f32;
+
+                    tracing::info!(
+                        width,
+                        height,
+                        physical_width,
+                        physical_height,
+                        self.physical_pixels_per_virtual_unit,
+                        "window virtual size changed"
+                    );
                     None
                 }
                 glfw::WindowEvent::MouseButton(mb, a, m) => {
@@ -429,7 +450,11 @@ impl GlfwBackend {
                 }),
                 glfw::WindowEvent::Char(c) => Some(Event::Text(c.to_string())),
                 glfw::WindowEvent::ContentScale(x, _) => {
-                    tracing::info!("content scale changed to {x}");
+                    tracing::info!(
+                        previous_scale = self.scale,
+                        current_scale = x,
+                        "content scale changed"
+                    );
                     self.raw_input.pixels_per_point = Some(x);
                     self.scale = x;
                     self.window_size_logical = [
@@ -449,7 +474,18 @@ impl GlfwBackend {
                     self.window.set_should_close(true);
                     None
                 }
+                glfw::WindowEvent::Pos(x, y) => {
+                    info!(
+                        previous_x = self.window_position[0],
+                        previous_y = self.window_position[1],
+                        current_x = x,
+                        current_y = y,
+                        "jokolay window position changed"
+                    );
+                    self.window_position = [x, y];
 
+                    None
+                }
                 glfw::WindowEvent::FileDrop(f) => {
                     self.raw_input
                         .dropped_files
