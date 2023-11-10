@@ -151,10 +151,10 @@ impl GlowBackend {
     }
 }
 pub struct GpuTexture {
-    handle: glow::Texture,
-    width: u32,
-    height: u32,
-    sampler: Sampler,
+    pub handle: glow::NativeTexture,
+    pub width: u32,
+    pub height: u32,
+    pub sampler: NativeSampler,
 }
 
 /// Egui Painter using glow::Context
