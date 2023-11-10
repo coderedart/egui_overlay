@@ -1,6 +1,6 @@
 [package]
 name = "egui_render_three_d"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2021"
 description = "egui rendering backend using three-d"
 license = "MIT"

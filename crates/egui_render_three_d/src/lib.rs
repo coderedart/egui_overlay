@@ -1,5 +1,5 @@
 use egui::{ClippedPrimitive, TexturesDelta};
-use egui_render_glow::{GlowBackend, GlowConfig};
+pub use egui_render_glow::*;
 use raw_window_handle::RawWindowHandle;
 pub use three_d;
 use three_d::Context;
