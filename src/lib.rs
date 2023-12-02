@@ -12,7 +12,6 @@ pub use egui_render_wgpu;
 use egui_render_wgpu::WgpuBackend as DefaultGfxBackend;
 pub use egui_window_glfw_passthrough;
 use egui_window_glfw_passthrough::{GlfwBackend, GlfwConfig};
-use raw_window_handle::HasRawWindowHandle;
 
 /// After implementing [`EguiOverlay`], just call this function with your app data
 pub fn start<T: EguiOverlay + 'static>(user_data: T) {
@@ -42,6 +41,7 @@ pub fn start<T: EguiOverlay + 'static>(user_data: T) {
     // for non-macos, we just use three_d because its much faster compile times and opengl transparency being more reliable than vulkan transparency
     #[cfg(not(target_os = "macos"))]
     let default_gfx_backend = {
+        use raw_window_handle::HasRawWindowHandle;
         let handle = glfw_backend.window.raw_window_handle();
         DefaultGfxBackend::new(
             egui_render_three_d::ThreeDConfig {
