@@ -1,6 +1,6 @@
 [package]
 name = "egui_overlay"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2021"
 license = "MIT"
 description = "Egui integration to easily create Desktop Overlays"

@@ -24,7 +24,7 @@ pub fn start<T: EguiOverlay + 'static>(user_data: T) {
         #[cfg(not(target_os = "macos"))]
         opengl_window: Some(true),
         #[cfg(target_os = "macos")]
-        opengl_window: Some(true),
+        opengl_window: Some(false),
         transparent_window: Some(true),
         ..Default::default()
     });
@@ -47,7 +47,7 @@ pub fn start<T: EguiOverlay + 'static>(user_data: T) {
         egui_render_wgpu::WgpuConfig {
             ..Default::default()
         },
-        Some(&glfw.window),
+        Some(&glfw_backend.window),
         latest_size,
     );
     let overlap_app = OverlayApp {
