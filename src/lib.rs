@@ -17,31 +17,42 @@ use raw_window_handle::HasRawWindowHandle;
 /// After implementing [`EguiOverlay`], just call this function with your app data
 pub fn start<T: EguiOverlay + 'static>(user_data: T) {
     let mut glfw_backend = GlfwBackend::new(GlfwConfig {
+        // this closure will be called before creating a window
         glfw_callback: Box::new(|gtx| {
+            // some defualt hints. it is empty atm, but in future we might add some convenience hints to it.
             (egui_window_glfw_passthrough::GlfwConfig::default().glfw_callback)(gtx);
+            // scale the window size based on monitor scale. as 800x600 looks too small on a 4k screen, compared to a hd screen in absolute pixel sizes.
             gtx.window_hint(egui_window_glfw_passthrough::glfw::WindowHint::ScaleToMonitor(true));
         }),
         #[cfg(not(target_os = "macos"))]
-        opengl_window: Some(true),
+        opengl_window: Some(true), // opengl for non-macos, for faster compilation and less wgpu bloat. also, drivers are better with gl transparency than vk
         #[cfg(target_os = "macos")]
-        opengl_window: Some(false),
+        opengl_window: Some(false), // macos doesn't support opengl.
         transparent_window: Some(true),
         ..Default::default()
     });
+    // always on top
     glfw_backend.window.set_floating(true);
+    // disable borders/titlebar
     glfw_backend.window.set_decorated(false);
+
     let latest_size = glfw_backend.window.get_framebuffer_size();
     let latest_size = [latest_size.0 as _, latest_size.1 as _];
-    let handle = glfw_backend.window.raw_window_handle();
+
+    // for non-macos, we just use three_d because its much faster compile times and opengl transparency being more reliable than vulkan transparency
     #[cfg(not(target_os = "macos"))]
-    let default_gfx_backend = DefaultGfxBackend::new(
-        egui_render_three_d::ThreeDConfig {
-            ..Default::default()
-        },
-        |s| glfw_backend.get_proc_address(s),
-        handle,
-        latest_size,
-    );
+    let default_gfx_backend = {
+        let handle = glfw_backend.window.raw_window_handle();
+        DefaultGfxBackend::new(
+            egui_render_three_d::ThreeDConfig {
+                ..Default::default()
+            },
+            |s| glfw_backend.get_proc_address(s),
+            handle,
+            latest_size,
+        )
+    };
+    // macos doesn't have opengl, so wgpu/metal for that.
     #[cfg(target_os = "macos")]
     let default_gfx_backend = DefaultGfxBackend::new(
         egui_render_wgpu::WgpuConfig {
