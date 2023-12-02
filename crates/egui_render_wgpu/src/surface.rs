@@ -25,6 +25,7 @@ impl Drop for SurfaceManager {
     }
 }
 impl SurfaceManager {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         window: Option<impl HasRawWindowHandle + HasRawDisplayHandle>,
         transparent: Option<bool>,
@@ -123,8 +124,7 @@ impl SurfaceManager {
 
             if transparent.unwrap_or_default() {
                 use CompositeAlphaMode::*;
-                let alpha_modes: Vec<CompositeAlphaMode> =
-                    capabilities.alpha_modes.iter().copied().collect();
+                let alpha_modes: Vec<CompositeAlphaMode> = capabilities.alpha_modes.to_vec();
                 tracing::info!(?alpha_modes, "supported alpha modes");
                 {
                     self.surface_config.alpha_mode = if alpha_modes.contains(&Inherit) {

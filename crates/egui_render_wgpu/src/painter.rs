@@ -390,7 +390,7 @@ impl EguiPainter {
             let mut is_this_font_texure = false;
             // no need for mipmaps if we are dealing with font texture
             let mip_level_count = match tex_id {
-                TextureId::Managed(tid) if tid == 0 => {
+                TextureId::Managed(0) => {
                     is_this_font_texure = true;
                     1
                 }
