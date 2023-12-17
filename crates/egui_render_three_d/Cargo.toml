@@ -1,12 +1,13 @@
 [package]
 name = "egui_render_three_d"
-version = "0.5.2"
-edition = "2021"
 description = "egui rendering backend using three-d"
-license = "MIT"
+version.workspace = true
+repository.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [dependencies]
-egui_render_glow = { version = "0.5", path = "../egui_render_glow" }
+egui_render_glow = { version = "0.6", path = "../egui_render_glow" }
 three-d = { version = "0.16", default-features = false }
 egui = { workspace = true }
 raw-window-handle = { workspace = true }

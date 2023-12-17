@@ -1,6 +1,7 @@
 //! This crate uses `glfw-passthrough` crate as a window backend for egui.
 
 use egui::{Event, Key, PointerButton, Pos2, RawInput};
+use egui::{ViewportEvent, ViewportId, ViewportInfo};
 pub use glfw;
 use glfw::Action;
 use glfw::ClientApiHint;
@@ -57,6 +58,8 @@ pub struct GlfwBackend {
     /// in logical points
     pub cursor_pos: [f32; 2],
     pub cursor_inside_bounds: bool,
+    pub title: String,
+    pub focused: bool,
 }
 impl Drop for GlfwBackend {
     fn drop(&mut self) {
@@ -201,6 +204,7 @@ impl GlfwBackend {
         let size_physical_pixels = [physical_width as u32, physical_height as u32];
         let position = window.get_pos();
         let window_position = [position.0, position.1];
+        let focus = window.is_focused();
         // set raw input screen rect details so that first frame
         // will have correct size even without any resize event
         let raw_input = RawInput {
@@ -212,6 +216,19 @@ impl GlfwBackend {
                 ]
                 .into(),
             ])),
+            viewports: [(
+                ViewportId::ROOT,
+                ViewportInfo {
+                    parent: None,
+                    title: Some(window_title.clone()),
+                    events: Default::default(),
+                    native_pixels_per_point: Some(scale),
+                    focused: Some(focus),
+                    ..Default::default()
+                },
+            )]
+            .into_iter()
+            .collect(),
             ..Default::default()
         };
         tracing::info!(
@@ -242,9 +259,11 @@ impl GlfwBackend {
             ],
             physical_pixels_per_virtual_unit: pixels_per_virtual_unit,
             window_position,
+            title: window_title,
+            focused: focus,
         }
     }
-
+    /// returns raw input and scale. `scale` is only Some, if it changed (or if first frame). Otherwise it just returns None.
     pub fn take_raw_input(&mut self) -> RawInput {
         self.raw_input.take()
     }
@@ -315,16 +334,27 @@ impl GlfwBackend {
             (size[1] * self.scale / self.physical_pixels_per_virtual_unit) as i32,
         );
     }
+    pub fn set_title(&mut self, title: String) {
+        self.title = title;
+        self.window.set_title(&self.title);
+    }
 }
 
 impl GlfwBackend {
     #[allow(unused)]
     pub fn tick(&mut self) {
         self.frame_events.clear();
+
+        let time = self.glfw.get_time();
+        self.raw_input.time = Some(time);
+        self.raw_input.focused = self.focused;
+
         // whether we got a cursor event in this frame.
         // if false, and the window is passthrough, we will manually get cursor pos and push it
         // otherwise, we do nothing.
         let mut cursor_event = false;
+        let mut scale = None;
+        let mut close = false;
         for (_timestamp, event) in glfw::flush_messages(&self.events_receiver) {
             self.frame_events.push(event.clone());
             // if let &glfw::WindowEvent::CursorPos(..) = &event {
@@ -455,6 +485,7 @@ impl GlfwBackend {
                         "content scale changed"
                     );
                     self.scale = x;
+                    scale = Some(x);
                     self.window_size_logical = [
                         self.framebuffer_size_physical[0] as f32 / self.scale,
                         self.framebuffer_size_physical[1] as f32 / self.scale,
@@ -470,6 +501,7 @@ impl GlfwBackend {
                 }
                 glfw::WindowEvent::Close => {
                     self.window.set_should_close(true);
+                    close = true;
                     None
                 }
                 glfw::WindowEvent::Pos(x, y) => {
@@ -528,7 +560,11 @@ impl GlfwBackend {
                         Some(Event::PointerGone)
                     }
                 }
-                _rest => None,
+                WindowEvent::Focus(f) => {
+                    self.focused = f;
+                    None
+                }
+                _ => None,
             } {
                 self.raw_input.events.push(ev);
             }
@@ -568,6 +604,19 @@ impl GlfwBackend {
             }
         }
         self.cursor_pos = logical_cursor_pos;
+        let title = self.title.clone();
+        let vp = self
+            .raw_input
+            .viewports
+            .get_mut(&ViewportId::ROOT)
+            .expect("failed to get default viewport info");
+        vp.events.clear();
+        vp.focused = Some(self.focused);
+        vp.title = Some(title);
+        if let Some(scale) = scale {
+            vp.native_pixels_per_point = Some(scale);
+        }
+        vp.events.push(ViewportEvent::Close);
     }
     pub fn set_cursor(&mut self, cursor: egui::CursorIcon) {
         let cursor = egui_to_glfw_cursor(cursor);

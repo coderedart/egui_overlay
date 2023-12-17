@@ -1,9 +1,10 @@
 [package]
 name = "egui_window_glfw_passthrough"
-version = "0.5.1"
-edition = "2021"
 description = "egui windowing backend using Glfw"
-license = "MIT"
+version.workspace = true
+repository.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [features]
 default = ["glfw/default"]
