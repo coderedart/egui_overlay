@@ -28,7 +28,7 @@ egui = { workspace = true }
 
 
 [workspace.dependencies]
-egui = { version = "0.23", default-features = false }
+egui = { version = "0.24.1", default-features = false }
 bytemuck = { version = "1", default-features = false }
 tracing = { version = "0.1", default-features = false }
 raw-window-handle = { version = "0.5" }

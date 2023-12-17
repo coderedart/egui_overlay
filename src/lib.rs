@@ -69,6 +69,7 @@ pub fn start<T: EguiOverlay + 'static>(user_data: T) {
     };
     overlap_app.enter_event_loop();
 }
+
 /// Implement this trait for your struct containing data you need. Then, call [`start`] fn with that data
 pub trait EguiOverlay {
     fn gui_run(
@@ -95,11 +96,16 @@ pub trait EguiOverlay {
 
         let egui::FullOutput {
             platform_output,
-            repaint_after,
             textures_delta,
             shapes,
+            pixels_per_point,
+            viewport_output,
         } = egui_context.end_frame();
-        let meshes = egui_context.tessellate(shapes);
+        let meshes = egui_context.tessellate(shapes, pixels_per_point);
+        let repaint_after = viewport_output
+            .into_iter()
+            .map(|f| f.1.repaint_delay)
+            .collect::<Vec<Duration>>()[0];
 
         default_gfx_backend.render_egui(meshes, textures_delta, glfw_backend.window_size_logical);
         if glfw_backend.is_opengl() {
@@ -113,6 +119,7 @@ pub trait EguiOverlay {
         Some((platform_output, repaint_after))
     }
 }
+
 pub struct OverlayApp<T: EguiOverlay> {
     pub user_data: T,
     pub egui_context: Context,
