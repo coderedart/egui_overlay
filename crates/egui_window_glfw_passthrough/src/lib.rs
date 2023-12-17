@@ -212,7 +212,6 @@ impl GlfwBackend {
                 ]
                 .into(),
             ])),
-            pixels_per_point: Some(scale),
             ..Default::default()
         };
         tracing::info!(
@@ -455,7 +454,6 @@ impl GlfwBackend {
                         current_scale = x,
                         "content scale changed"
                     );
-                    self.raw_input.pixels_per_point = Some(x);
                     self.scale = x;
                     self.window_size_logical = [
                         self.framebuffer_size_physical[0] as f32 / self.scale,
