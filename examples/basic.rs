@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"] // to turn off console.
+
 use egui::DragValue;
 use egui_overlay::EguiOverlay;
 #[cfg(not(target_os = "macos"))]
