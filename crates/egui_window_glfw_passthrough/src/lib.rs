@@ -59,6 +59,9 @@ pub struct GlfwBackend {
     pub cursor_inside_bounds: bool,
     pub title: String,
     pub focused: bool,
+    /// if the window is mouse_passthrough or not.
+    /// We cache this, to avoid redundant calls to [glfw::Window::set_mouse_passthrough]
+    pub passthrough: bool,
 }
 impl Drop for GlfwBackend {
     fn drop(&mut self) {
@@ -237,6 +240,7 @@ impl GlfwBackend {
         pixels_per_virtual_unit: {pixels_per_virtual_unit};
         "
         );
+        let pass = window.is_mouse_passthrough();
         Self {
             glfw: glfw_context,
             events_receiver,
@@ -258,6 +262,7 @@ impl GlfwBackend {
             window_position,
             title: window_title,
             focused: focus,
+            passthrough: pass,
         }
     }
     /// returns raw input and scale. `scale` is only Some, if it changed (or if first frame). Otherwise it just returns None.
@@ -334,6 +339,16 @@ impl GlfwBackend {
     pub fn set_title(&mut self, title: String) {
         self.title = title;
         self.window.set_title(&self.title);
+    }
+    pub fn is_passthrough(&self) -> bool {
+        self.passthrough
+    }
+    pub fn set_passthrough(&mut self, passthrough: bool) {
+        if self.passthrough == passthrough {
+            return;
+        }
+        self.window.set_mouse_passthrough(passthrough);
+        self.passthrough = passthrough;
     }
 }
 

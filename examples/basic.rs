@@ -89,9 +89,11 @@ impl EguiOverlay for HelloWorld {
 
         // here you decide if you want to be passthrough or not.
         if egui_context.wants_pointer_input() || egui_context.wants_keyboard_input() {
-            glfw_backend.window.set_mouse_passthrough(false);
+            // we need input, so we need the window to be NOT passthrough
+            glfw_backend.set_passthrough(false);
         } else {
-            glfw_backend.window.set_mouse_passthrough(true);
+            // we don't care about input, so the window can be passthrough now
+            glfw_backend.set_passthrough(true)
         }
         egui_context.request_repaint();
     }
