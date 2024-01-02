@@ -110,7 +110,7 @@ impl Default for GlowConfig {
     fn default() -> Self {
         Self {
             webgl_config: Default::default(),
-            enable_debug: true,
+            enable_debug: false,
         }
     }
 }
