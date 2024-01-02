@@ -8,6 +8,7 @@ description = "Egui integration to easily create Desktop Overlays"
 
 [features]
 default = ["egui/default"]
+
 [dependencies]
 egui_window_glfw_passthrough = { version = "0.6", path = "crates/egui_window_glfw_passthrough" }
 egui = { workspace = true }

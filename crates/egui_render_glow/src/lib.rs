@@ -13,7 +13,7 @@ use tracing::{debug, info, warn};
 /// This is a simple macro tha checks for any opengl errors, and logs them.
 /// But this flushes all commands and forces synchronization with driver, which will slow down your program.
 /// So, by default, we only check for errors if `check_gl_error` feature is enabled. otherwise, this does nothing.
-/// 
+///
 /// OpenGL also supports "debug callbacks" feature, where it will call our callback when it has any logs. see [GlowConfig::enable_debug] for that
 #[macro_export]
 macro_rules! glow_error {
