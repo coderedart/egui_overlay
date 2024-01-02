@@ -49,7 +49,7 @@ pub unsafe fn create_glow_context(
     let glow_context = glow::Context::from_loader_function(|s| get_proc_address(s));
 
     if config.enable_debug {
-        enable_debug(&glow_context);
+        enable_debug(&glow_context, default_gl_debug_callback);
     }
     tracing::debug!("created glow context");
     glow_error!(glow_context);
@@ -250,29 +250,90 @@ pub unsafe fn create_samplers(glow_context: &glow::Context) -> (Sampler, Sampler
     (linear_sampler, nearest_sampler, font_sampler)
 }
 
-#[allow(unused)]
-pub unsafe fn enable_debug(gl: &glow::Context) {
+/// This is a simple default debug callback.
+/// It will just log the message using tracing.
+/// For the following severities, it will use the respective log levels
+/// notification -> trace;
+/// low -> debug;
+/// medium -> warn;
+/// high -> error;
+#[allow(unused_assignments)]
+pub fn default_gl_debug_callback(
+    source: u32,
+    error_type: u32,
+    error_id: u32,
+    severity_code: u32,
+    error_str: &str,
+) {
+    // if error_type doesn't match any enum, then we should probably print the u32 value, so that user can look it up manually
+    let mut error_type_string = String::default();
+    let error_type = match error_type {
+        glow::DEBUG_TYPE_ERROR => "ERROR",
+        glow::DEBUG_TYPE_DEPRECATED_BEHAVIOR => "DEPRECATED_BEHAVIOR",
+        glow::DEBUG_TYPE_UNDEFINED_BEHAVIOR => "UNDEFINED_BEHAVIOR",
+        glow::DEBUG_TYPE_PORTABILITY => "PORTABILITY",
+        glow::DEBUG_TYPE_PERFORMANCE => "PERFORMANCE",
+        glow::DEBUG_TYPE_MARKER => "MARKER",
+        glow::DEBUG_TYPE_PUSH_GROUP => "PUSH_GROUP",
+        glow::DEBUG_TYPE_POP_GROUP => "POP_GROUP",
+        glow::DEBUG_TYPE_OTHER => "OTHER",
+        rest => {
+            error_type_string = format!("Unknown Error Type: {rest}");
+            &error_type_string
+        }
+    };
+    let mut source_string = String::default();
+
+    let source = match source {
+        glow::DEBUG_SOURCE_API => "API",
+        glow::DEBUG_SOURCE_WINDOW_SYSTEM => "WINDOW_SYSTEM",
+        glow::DEBUG_SOURCE_SHADER_COMPILER => "SHADER_COMPILER",
+        glow::DEBUG_SOURCE_THIRD_PARTY => "THIRD_PARTY",
+        glow::DEBUG_SOURCE_APPLICATION => "APPLICATION",
+        glow::DEBUG_SOURCE_OTHER => "OTHER",
+        rest => {
+            source_string = format!("Unknown Source: {rest}");
+            &source_string
+        }
+    };
+    let mut severity_string = Default::default();
+    let severity = match severity_code {
+        glow::DEBUG_SEVERITY_HIGH => "HIGH",
+        glow::DEBUG_SEVERITY_MEDIUM => "MEDIUM",
+        glow::DEBUG_SEVERITY_LOW => "LOW",
+        glow::DEBUG_SEVERITY_NOTIFICATION => "NOTIFICATION",
+        rest => {
+            severity_string = format!("Unknown Severity: {rest}");
+            &severity_string
+        }
+    };
+    match severity_code {
+        glow::DEBUG_SEVERITY_NOTIFICATION => {
+            tracing::trace!(source, error_type, error_id, severity, error_str)
+        }
+        glow::DEBUG_SEVERITY_LOW => {
+            tracing::debug!(source, error_type, error_id, severity, error_str)
+        }
+        glow::DEBUG_SEVERITY_MEDIUM => {
+            tracing::warn!(source, error_type, error_id, severity, error_str)
+        }
+        glow::DEBUG_SEVERITY_HIGH => {
+            tracing::error!(source, error_type, error_id, severity, error_str)
+        }
+        rest => tracing::debug!("unknown severity {rest}"),
+    };
+}
+
+/// enables debug callbacks, and sets the provided callback.
+pub unsafe fn enable_debug(
+    gl: &glow::Context,
+    debug_callback: impl FnMut(u32, u32, u32, u32, &str),
+) {
     gl.enable(glow::DEBUG_OUTPUT);
     gl.enable(glow::DEBUG_OUTPUT_SYNCHRONOUS);
     if gl.supports_debug() {
         tracing::info!("opengl supports debug. setting debug callback");
-        gl.debug_message_callback(|source, error_type, error_id, severity, error_str| {
-            match severity {
-                glow::DEBUG_SEVERITY_NOTIFICATION => {
-                    tracing::debug!(source, error_type, error_id, severity, error_str)
-                }
-                glow::DEBUG_SEVERITY_LOW => {
-                    tracing::info!(source, error_type, error_id, severity, error_str)
-                }
-                glow::DEBUG_SEVERITY_MEDIUM => {
-                    tracing::warn!(source, error_type, error_id, severity, error_str)
-                }
-                glow::DEBUG_SEVERITY_HIGH => {
-                    tracing::error!(source, error_type, error_id, severity, error_str)
-                }
-                rest => tracing::error!("unknown severity {rest}"),
-            };
-        });
+        gl.debug_message_callback(debug_callback);
     }
     glow_error!(gl);
 }

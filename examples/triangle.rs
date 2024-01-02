@@ -6,6 +6,15 @@ use egui_render_three_d::{
 };
 
 fn main() {
+    use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+    // if RUST_LOG is not set, we will use the following filters
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(
+            EnvFilter::try_from_default_env()
+                .unwrap_or(EnvFilter::new("debug,wgpu=warn,naga=warn")),
+        )
+        .init();
     egui_overlay::start(HelloWorld {
         text: "hello world".to_string(),
         model: None,

@@ -95,6 +95,15 @@ pub struct GlowConfig {
     pub webgl_config: WebGlConfig,
     /// This will set the debug callbacks, which will be used by gl drivers to log any gl errors via [tracing].
     /// default is true, as it can be helpful to figure out any errors.
+    /// After creating opengl context, you might want to enable synchronous debug callbacks
+    /// `glow_context.enable(glow::DEBUG_OUTPUT_SYNCHRONOUS);`
+    /// This will make sure that if an opengl fn causes an error, it will be immediately calling the callback and logging the error.
+    /// If you are fine with delaying the debug callbacks, for the sake of performance, then make sure to *disable* it
+    /// `glow_context.disable(glow::DEBUG_OUTPUT_SYNCHRONOUS);`
+    ///
+    /// For more information, read <https://www.khronos.org/opengl/wiki/Debug_Output>
+    ///
+    /// It is always possible to just set this to false, and s
     pub enable_debug: bool,
 }
 impl Default for GlowConfig {

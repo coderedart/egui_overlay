@@ -13,7 +13,8 @@ fn main() {
     tracing_subscriber::registry()
         .with(fmt::layer())
         .with(
-            EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("info,wgpu=warn,naga=warn")),
+            EnvFilter::try_from_default_env()
+                .unwrap_or(EnvFilter::new("debug,wgpu=warn,naga=warn")),
         )
         .init();
 
