@@ -103,7 +103,7 @@ pub struct GlowConfig {
     ///
     /// For more information, read <https://www.khronos.org/opengl/wiki/Debug_Output>
     ///
-    /// It is always possible to just set this to false, and s
+    /// It is always possible to just set this to false, and set the debugging yourself after creating glow context.
     pub enable_debug: bool,
 }
 impl Default for GlowConfig {
