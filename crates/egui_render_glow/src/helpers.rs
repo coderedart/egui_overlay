@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{glow_error, WebGlConfig};
+use crate::{glow_error, GlowConfig};
 use glow::*;
 use raw_window_handle::RawWindowHandle;
 use tracing::*;
@@ -39,19 +39,21 @@ pub unsafe fn create_glow_wasm32_unknown(
 pub unsafe fn create_glow_context(
     mut get_proc_address: impl FnMut(&str) -> *const std::ffi::c_void,
     handle: RawWindowHandle,
-    _webgl_config: WebGlConfig,
+    config: GlowConfig,
 ) -> Arc<glow::Context> {
     // for wasm32-unknown-unknown, use glow's own constructor.
     #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
-    let glow_context = create_glow_wasm32_unknown(window_backend, _webgl_config);
+    let glow_context = create_glow_wasm32_unknown(window_backend, config.webgl_config);
     // for non-web and emscripten platforms, just use loader fn
     #[cfg(any(not(target_arch = "wasm32"), target_os = "emscripten"))]
     let glow_context = glow::Context::from_loader_function(|s| get_proc_address(s));
 
+    if config.enable_debug {
+        enable_debug(&glow_context);
+    }
     tracing::debug!("created glow context");
-    let glow_context = Arc::new(glow_context);
     glow_error!(glow_context);
-    glow_context
+    Arc::new(glow_context)
 }
 pub unsafe fn create_program_from_src(
     glow_context: &glow::Context,

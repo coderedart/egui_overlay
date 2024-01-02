@@ -13,10 +13,9 @@ use glfw::WindowHint;
 use std::sync::mpsc::Receiver;
 use tracing::info;
 /// This is the window backend for egui using [`glfw`]
-/// Most of the startup configuration is done inside [`default_glfw_callback()`] and [`default_window_callback()`]
-/// These are passed to the `new` function using [`GlfwConfig`].
+/// You can configure most of it at startup using [`GlfwConfig`].
 ///
-/// https://www.glfw.org/docs/3.3/intro_guide.html#coordinate_systems
+/// <https://www.glfw.org/docs/3.3/intro_guide.html#coordinate_systems>
 /// So, there are two different units used when referring to size/position.
 /// 1. physical size. This is size in raw physical pixels of the framebuffer.
 /// 2. virtual screen coordinates (units). These may or may not be the same size as the pixels.
@@ -67,13 +66,11 @@ impl Drop for GlfwBackend {
     }
 }
 /// Signature of Glfw callback function inside [`GlfwConfig`]
-/// we provide a default callback for common usecases -> [`default_glfw_callback()`]
 pub type GlfwCallback = Box<dyn FnOnce(&mut Glfw)>;
 /// This is the signature for window callback inside new function of [`GlfwBackend`]
 pub type WindowCallback = Box<dyn FnOnce(&mut glfw::Window)>;
 
-/// The configuration struct for Glfw Backend
-/// passed in to [`WindowBackend::new()`] of [`GlfwBackend`]
+/// The configuration struct for Glfw Backend creation
 pub struct GlfwConfig {
     /// title of the window
     pub window_title: String,

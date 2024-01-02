@@ -1,10 +1,13 @@
 [package]
 name = "egui_render_glow"
 description = "egui rendering backend using glow"
-version = "0.6.1"
+version = "0.6.2"
 repository.workspace = true
 edition.workspace = true
 license.workspace = true
+
+[features]
+check_gl_error = [] # will slow down your app, as error checking synchronizes gl drivers
 
 [dependencies]
 tracing = { workspace = true }

@@ -10,14 +10,20 @@ use raw_window_handle::RawWindowHandle;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
 
-/// opengl error checking flushes all commands and forces synchronization
-/// so, we should make this feature gated eventually and maybe use debug callbacks (on desktop atleast)
+/// This is a simple macro tha checks for any opengl errors, and logs them.
+/// But this flushes all commands and forces synchronization with driver, which will slow down your program.
+/// So, by default, we only check for errors if `check_gl_error` feature is enabled. otherwise, this does nothing.
+/// 
+/// OpenGL also supports "debug callbacks" feature, where it will call our callback when it has any logs. see [GlowConfig::enable_debug] for that
 #[macro_export]
 macro_rules! glow_error {
     ($glow_context: ident) => {
-        let error_code = $glow_context.get_error();
-        if error_code != glow::NO_ERROR {
-            tracing::error!("glow error: {} at line {}", error_code, line!());
+        #[cfg(feature = "check_gl_error")]
+        {
+            let error_code = $glow_context.get_error();
+            if error_code != glow::NO_ERROR {
+                tracing::error!("glow error: {} at line {}", error_code, line!());
+            }
         }
     };
 }
@@ -83,12 +89,22 @@ impl Drop for GlowBackend {
     }
 }
 
-#[derive(Debug, Default)]
+/// Configuration for Glow context when you are creating one
+#[derive(Debug)]
 pub struct GlowConfig {
     pub webgl_config: WebGlConfig,
+    /// This will set the debug callbacks, which will be used by gl drivers to log any gl errors via [tracing].
+    /// default is true, as it can be helpful to figure out any errors.
     pub enable_debug: bool,
 }
-
+impl Default for GlowConfig {
+    fn default() -> Self {
+        Self {
+            webgl_config: Default::default(),
+            enable_debug: true,
+        }
+    }
+}
 impl GlowBackend {
     pub fn new(
         config: GlowConfig,
@@ -97,7 +113,7 @@ impl GlowBackend {
         framebuffer_size: [u32; 2],
     ) -> Self {
         let glow_context: Arc<glow::Context> =
-            unsafe { create_glow_context(get_proc_address, handle, config.webgl_config) };
+            unsafe { create_glow_context(get_proc_address, handle, config) };
 
         if glow_context.supported_extensions().contains("EXT_sRGB")
             || glow_context.supported_extensions().contains("GL_EXT_sRGB")
