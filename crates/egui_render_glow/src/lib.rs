@@ -90,7 +90,7 @@ impl Drop for GlowBackend {
 }
 
 /// Configuration for Glow context when you are creating one
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct GlowConfig {
     pub webgl_config: WebGlConfig,
     /// This will set the debug callbacks, which will be used by gl drivers to log any gl errors via [tracing].
@@ -106,14 +106,7 @@ pub struct GlowConfig {
     /// It is always possible to just set this to false, and set the debugging yourself after creating glow context.
     pub enable_debug: bool,
 }
-impl Default for GlowConfig {
-    fn default() -> Self {
-        Self {
-            webgl_config: Default::default(),
-            enable_debug: false,
-        }
-    }
-}
+
 impl GlowBackend {
     pub fn new(
         config: GlowConfig,
