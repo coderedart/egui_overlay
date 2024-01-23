@@ -718,7 +718,7 @@ pub fn layout_based_glfw_to_egui_key(key: glfw::Key, scancode: i32) -> Option<Ke
         | glfw::Key::KpAdd
         | glfw::Key::KpEqual => {
             let name = glfw::get_key_name(Some(key), Some(scancode));
-            name.map(|n| egui::Key::from_name(&n)).flatten()
+            name.and_then(|n| egui::Key::from_name(&n))
         }
         _ => layout_independent_glfw_to_egui_key(key),
     }
