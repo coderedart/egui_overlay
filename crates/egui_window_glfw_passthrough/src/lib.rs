@@ -486,6 +486,7 @@ impl GlfwBackend {
                             pressed: pressed.unwrap_or_default(),
                             modifiers: glfw_to_egui_modifers(m),
                             repeat,
+                            physical_key: None
                         }
                     })
                 }),
