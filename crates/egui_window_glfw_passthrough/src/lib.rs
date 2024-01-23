@@ -445,7 +445,7 @@ impl GlfwBackend {
                 glfw::WindowEvent::Scroll(x, y) => {
                     Some(Event::Scroll([x as f32 * 25.0, y as f32 * 25.0].into()))
                 }
-                glfw::WindowEvent::Key(k, _, a, m) => match k {
+                glfw::WindowEvent::Key(k, scancode, a, m) => match k {
                     glfw::Key::C => {
                         if glfw_to_egui_action(a).unwrap_or_default()
                             && m.contains(glfw::Modifiers::Control)
@@ -478,15 +478,15 @@ impl GlfwBackend {
                     _ => None,
                 }
                 .or_else(|| {
-                    glfw_to_egui_key(k).map(|key| {
-                        let pressed = glfw_to_egui_action(a);
-                        let repeat = pressed.is_none();
-                        Event::Key {
-                            key,
-                            pressed: pressed.unwrap_or_default(),
-                            modifiers: glfw_to_egui_modifers(m),
-                            repeat,
-                        }
+                    let pressed = glfw_to_egui_action(a);
+                    layout_based_glfw_to_egui_key(k, scancode).map(|key| Event::Key {
+                        key,
+                        pressed: pressed.unwrap_or_default(),
+                        modifiers: glfw_to_egui_modifers(m),
+                        repeat: false,
+                        // glfw's keys have always been independent of layout
+                        // if you need the key from the current layotu
+                        physical_key: layout_independent_glfw_to_egui_key(k),
                     })
                 }),
                 glfw::WindowEvent::Char(c) => Some(Event::Text(c.to_string())),
@@ -638,21 +638,106 @@ impl GlfwBackend {
         }
     }
 }
-
+/// glfw separates keys into two categories.
+/// 1. Printable
+/// 2. Non-Printable.
+///
+/// Printable keys are dependent on layout. For example, `W` in `Qwerty` layout will map to `Z` in `Azerty` layout.
+/// For text, we will always use the text event. But for "keys" (eg: game input), we will need to decide whether to consider the `W`` as `W`` or `Z`.
+/// For all printable keys like `W`, we will use this fn to translate to egui's `Key`. So, we will translate it to `Z`.
+/// For non-printable keys like `Enter` or `Backspace` or `F2`, we will translate in a layout independent way.
+/// This is very useful for eg: keyboard shortcuts, as user expects to see `Z` when he uses it as shortcut on his keyboard.
+///
+/// You can directly use [layout_independent_glfw_to_egui_key] to just get the physical key location without caring about logical layout.
+/// So, you will simply get `W` even if the user is using Azerty layout. This is important, as you want to preserve the "positions" irrespective of layouts.
+/// So, pressing the key at `W` location will always move the character forward, even if it is `Z` according to layout.
+pub fn layout_based_glfw_to_egui_key(key: glfw::Key, scancode: i32) -> Option<Key> {
+    match key {
+        glfw::Key::Apostrophe
+        | glfw::Key::Comma
+        | glfw::Key::Minus
+        | glfw::Key::Period
+        | glfw::Key::Slash
+        | glfw::Key::Num0
+        | glfw::Key::Num1
+        | glfw::Key::Num2
+        | glfw::Key::Num3
+        | glfw::Key::Num4
+        | glfw::Key::Num5
+        | glfw::Key::Num6
+        | glfw::Key::Num7
+        | glfw::Key::Num8
+        | glfw::Key::Num9
+        | glfw::Key::Semicolon
+        | glfw::Key::Equal
+        | glfw::Key::A
+        | glfw::Key::B
+        | glfw::Key::C
+        | glfw::Key::D
+        | glfw::Key::E
+        | glfw::Key::F
+        | glfw::Key::G
+        | glfw::Key::H
+        | glfw::Key::I
+        | glfw::Key::J
+        | glfw::Key::K
+        | glfw::Key::L
+        | glfw::Key::M
+        | glfw::Key::N
+        | glfw::Key::O
+        | glfw::Key::P
+        | glfw::Key::Q
+        | glfw::Key::R
+        | glfw::Key::S
+        | glfw::Key::T
+        | glfw::Key::U
+        | glfw::Key::V
+        | glfw::Key::W
+        | glfw::Key::X
+        | glfw::Key::Y
+        | glfw::Key::Z
+        | glfw::Key::LeftBracket
+        | glfw::Key::Backslash
+        | glfw::Key::RightBracket
+        | glfw::Key::World1
+        | glfw::Key::World2
+        | glfw::Key::Kp0
+        | glfw::Key::Kp1
+        | glfw::Key::Kp2
+        | glfw::Key::Kp3
+        | glfw::Key::Kp4
+        | glfw::Key::Kp5
+        | glfw::Key::Kp6
+        | glfw::Key::Kp7
+        | glfw::Key::Kp8
+        | glfw::Key::Kp9
+        | glfw::Key::KpDecimal
+        | glfw::Key::KpDivide
+        | glfw::Key::KpMultiply
+        | glfw::Key::KpSubtract
+        | glfw::Key::KpAdd
+        | glfw::Key::KpEqual => {
+            let name = glfw::get_key_name(Some(key), Some(scancode));
+            name.map(|n| egui::Key::from_name(&n)).flatten()
+        }
+        _ => layout_independent_glfw_to_egui_key(key),
+    }
+}
 /// a function to get the matching egui key event for a given glfw key. egui does not support all the keys provided here.
-fn glfw_to_egui_key(key: glfw::Key) -> Option<Key> {
+/// This just matches the enum to map to the relevant egui key.
+pub fn layout_independent_glfw_to_egui_key(key: glfw::Key) -> Option<Key> {
     match key {
         glfw::Key::Space => Some(Key::Space),
-        glfw::Key::Num0 => Some(Key::Num0),
-        glfw::Key::Num1 => Some(Key::Num1),
-        glfw::Key::Num2 => Some(Key::Num2),
-        glfw::Key::Num3 => Some(Key::Num3),
-        glfw::Key::Num4 => Some(Key::Num4),
-        glfw::Key::Num5 => Some(Key::Num5),
-        glfw::Key::Num6 => Some(Key::Num6),
-        glfw::Key::Num7 => Some(Key::Num7),
-        glfw::Key::Num8 => Some(Key::Num8),
-        glfw::Key::Num9 => Some(Key::Num9),
+        glfw::Key::Num0 | glfw::Key::Kp0 => Some(Key::Num0),
+        glfw::Key::Num1 | glfw::Key::Kp1 => Some(Key::Num1),
+        glfw::Key::Num2 | glfw::Key::Kp2 => Some(Key::Num2),
+        glfw::Key::Num3 | glfw::Key::Kp3 => Some(Key::Num3),
+        glfw::Key::Num4 | glfw::Key::Kp4 => Some(Key::Num4),
+        glfw::Key::Num5 | glfw::Key::Kp5 => Some(Key::Num5),
+        glfw::Key::Num6 | glfw::Key::Kp6 => Some(Key::Num6),
+        glfw::Key::Num7 | glfw::Key::Kp7 => Some(Key::Num7),
+        glfw::Key::Num8 | glfw::Key::Kp8 => Some(Key::Num8),
+        glfw::Key::Num9 | glfw::Key::Kp9 => Some(Key::Num9),
         glfw::Key::A => Some(Key::A),
         glfw::Key::B => Some(Key::B),
         glfw::Key::C => Some(Key::C),
@@ -680,7 +765,7 @@ fn glfw_to_egui_key(key: glfw::Key) -> Option<Key> {
         glfw::Key::Y => Some(Key::Y),
         glfw::Key::Z => Some(Key::Z),
         glfw::Key::Escape => Some(Key::Escape),
-        glfw::Key::Enter => Some(Key::Enter),
+        glfw::Key::Enter | glfw::Key::KpEnter => Some(Key::Enter),
         glfw::Key::Tab => Some(Key::Tab),
         glfw::Key::Backspace => Some(Key::Backspace),
         glfw::Key::Insert => Some(Key::Insert),
@@ -693,6 +778,36 @@ fn glfw_to_egui_key(key: glfw::Key) -> Option<Key> {
         glfw::Key::PageDown => Some(Key::PageDown),
         glfw::Key::Home => Some(Key::Home),
         glfw::Key::End => Some(Key::End),
+        glfw::Key::Comma => Some(Key::Comma),
+        glfw::Key::Minus | glfw::Key::KpSubtract => Some(Key::Minus),
+        glfw::Key::Period | glfw::Key::KpDecimal => Some(Key::Period),
+        glfw::Key::Semicolon => Some(Key::Semicolon),
+        glfw::Key::Equal | glfw::Key::KpEqual => Some(Key::Equals),
+        glfw::Key::LeftBracket => Some(Key::OpenBracket),
+        glfw::Key::Backslash => Some(Key::Backslash),
+        glfw::Key::RightBracket => Some(Key::CloseBracket),
+        glfw::Key::KpAdd => Some(Key::Plus),
+        glfw::Key::GraveAccent => Some(Key::Backtick),
+        glfw::Key::F1 => Some(Key::F1),
+        glfw::Key::F2 => Some(Key::F2),
+        glfw::Key::F3 => Some(Key::F3),
+        glfw::Key::F4 => Some(Key::F4),
+        glfw::Key::F5 => Some(Key::F5),
+        glfw::Key::F6 => Some(Key::F6),
+        glfw::Key::F7 => Some(Key::F7),
+        glfw::Key::F8 => Some(Key::F8),
+        glfw::Key::F9 => Some(Key::F9),
+        glfw::Key::F10 => Some(Key::F10),
+        glfw::Key::F11 => Some(Key::F11),
+        glfw::Key::F12 => Some(Key::F12),
+        glfw::Key::F13 => Some(Key::F13),
+        glfw::Key::F14 => Some(Key::F14),
+        glfw::Key::F15 => Some(Key::F15),
+        glfw::Key::F16 => Some(Key::F16),
+        glfw::Key::F17 => Some(Key::F17),
+        glfw::Key::F18 => Some(Key::F18),
+        glfw::Key::F19 => Some(Key::F19),
+        glfw::Key::F20 => Some(Key::F20),
         _ => None,
     }
 }
