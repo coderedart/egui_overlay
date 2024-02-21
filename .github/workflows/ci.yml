@@ -40,5 +40,8 @@ jobs:
       - name: Build
         run: cargo build --workspace
 
+      - name: Build (Wgpu)
+        run: cargo build --workspace --no-default-features --features=egui_default,wgpu
+        
       - name: Audit
         run: cargo audit
