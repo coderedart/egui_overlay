@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use crate::{glow_error, GlowConfig};
 use glow::*;
-use raw_window_handle::RawWindowHandle;
 use tracing::*;
 
 #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
@@ -38,7 +37,6 @@ pub unsafe fn create_glow_wasm32_unknown(
 #[allow(unused_variables)]
 pub unsafe fn create_glow_context(
     mut get_proc_address: impl FnMut(&str) -> *const std::ffi::c_void,
-    handle: RawWindowHandle,
     config: GlowConfig,
 ) -> Arc<glow::Context> {
     // for wasm32-unknown-unknown, use glow's own constructor.

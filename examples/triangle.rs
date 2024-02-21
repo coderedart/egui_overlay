@@ -143,7 +143,7 @@ fn create_triangle_model(three_d_context: &three_d::Context) -> Gm<Mesh, ColorMa
 
     // Construct a model, with a default color material, thereby transferring the mesh data to the GPU
     let mut model = Gm::new(
-        Mesh::new(&three_d_context, &cpu_mesh),
+        Mesh::new(three_d_context, &cpu_mesh),
         ColorMaterial::default(),
     );
 

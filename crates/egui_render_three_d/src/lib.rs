@@ -1,6 +1,5 @@
 use egui::{ClippedPrimitive, TexturesDelta};
 pub use egui_render_glow::*;
-use raw_window_handle::RawWindowHandle;
 pub use three_d;
 use three_d::Context;
 pub struct ThreeDBackend {
@@ -17,15 +16,9 @@ impl ThreeDBackend {
     pub fn new(
         config: ThreeDConfig,
         get_proc_address: impl FnMut(&str) -> *const std::ffi::c_void,
-        handle: RawWindowHandle,
         framebuffer_size: [u32; 2],
     ) -> Self {
-        let glow_backend = GlowBackend::new(
-            config.glow_config,
-            get_proc_address,
-            handle,
-            framebuffer_size,
-        );
+        let glow_backend = GlowBackend::new(config.glow_config, get_proc_address, framebuffer_size);
 
         #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
         {

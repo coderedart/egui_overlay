@@ -557,10 +557,10 @@ impl EguiPainter {
                             resolve_target: None,
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
-                                store: true,
+                                store: StoreOp::Store,
                             },
                         })],
-                        depth_stencil_attachment: None,
+                        ..Default::default()
                     });
 
                     rpass.set_pipeline(&self.mipmap_pipeline);

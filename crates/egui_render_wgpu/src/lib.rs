@@ -1,7 +1,5 @@
 mod painter;
 mod surface;
-
-use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use std::sync::Arc;
 use tracing::{debug, info};
 use wgpu::*;
@@ -28,8 +26,8 @@ impl Default for WgpuConfig {
             power_preference: PowerPreference::default(),
             device_descriptor: DeviceDescriptor {
                 label: Some("my wgpu device"),
-                features: Default::default(),
-                limits: Limits::downlevel_webgl2_defaults(),
+                required_features: Default::default(),
+                required_limits: Limits::downlevel_defaults(),
             },
             surface_config: SurfaceConfiguration {
                 usage: TextureUsages::RENDER_ATTACHMENT,
@@ -37,8 +35,9 @@ impl Default for WgpuConfig {
                 width: 0,
                 height: 0,
                 present_mode: PresentMode::Fifo,
-                alpha_mode: wgpu::CompositeAlphaMode::Inherit,
+                alpha_mode: wgpu::CompositeAlphaMode::Auto,
                 view_formats: vec![],
+                desired_maximum_frame_latency: 2,
             },
             surface_formats_priority: vec![],
             transparent_surface: Some(true),
@@ -71,9 +70,11 @@ impl Drop for WgpuBackend {
     }
 }
 impl WgpuBackend {
+    /// Both surface target and window are basically the same.
+    /// But we try to create the surface *twice*. First, with just instance, and if surface
     pub async fn new_async(
         config: WgpuConfig,
-        window: Option<impl HasRawWindowHandle + HasRawDisplayHandle>,
+        window: Option<Box<dyn WindowHandle>>,
         latest_fb_size: [u32; 2],
     ) -> Self {
         let WgpuConfig {
@@ -88,6 +89,8 @@ impl WgpuBackend {
         let instance = Arc::new(Instance::new(InstanceDescriptor {
             backends,
             dx12_shader_compiler: Default::default(),
+            flags: InstanceFlags::from_build_config(),
+            gles_minor_version: Gles3MinorVersion::Automatic,
         }));
         debug!("iterating over all adapters");
         #[cfg(not(target_arch = "wasm32"))]
@@ -95,10 +98,10 @@ impl WgpuBackend {
             debug!("adapter: {:#?}", adapter.get_info());
         }
 
-        let surface = window.as_ref().map(|w| unsafe {
+        let surface = window.map(|w| {
             tracing::debug!("creating a surface");
             instance
-                .create_surface(&w)
+                .create_surface(SurfaceTarget::Window(w))
                 .expect("failed to create surface")
         });
 
@@ -126,7 +129,7 @@ impl WgpuBackend {
         let queue = Arc::new(queue);
 
         let surface_manager = SurfaceManager::new(
-            window,
+            None,
             transparent_surface,
             latest_fb_size,
             &instance,
@@ -156,7 +159,7 @@ impl WgpuBackend {
 impl WgpuBackend {
     pub fn new(
         config: WgpuConfig,
-        window: Option<impl HasRawWindowHandle + HasRawDisplayHandle>,
+        window: Option<Box<dyn WindowHandle>>,
         latest_fb_size: [u32; 2],
     ) -> Self {
         pollster::block_on(Self::new_async(config, window, latest_fb_size))
@@ -164,7 +167,7 @@ impl WgpuBackend {
 
     pub fn resume(
         &mut self,
-        window: Option<impl HasRawWindowHandle + HasRawDisplayHandle>,
+        window: Option<Box<dyn WindowHandle>>,
         latest_fb_size: [u32; 2],
         transparent: Option<bool>,
     ) {
@@ -203,10 +206,10 @@ impl WgpuBackend {
                     resolve_target: None,
                     ops: Operations {
                         load: LoadOp::Clear(wgpu::Color::TRANSPARENT),
-                        store: true,
+                        store: StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: None,
+                ..Default::default()
             });
             self.command_encoders.push(ce);
         }
@@ -247,10 +250,10 @@ impl WgpuBackend {
                     resolve_target: None,
                     ops: Operations {
                         load: LoadOp::Load,
-                        store: true,
+                        store: StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: None,
+                ..Default::default()
             });
             self.painter
                 .draw_egui_with_renderpass(&mut egui_pass, draw_calls);

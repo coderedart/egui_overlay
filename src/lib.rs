@@ -1,14 +1,14 @@
 use std::time::Duration;
 
 use egui::{Context, PlatformOutput};
-#[cfg(not(target_os = "macos"))]
+#[cfg(feature = "three_d")]
 pub use egui_render_three_d;
-#[cfg(not(target_os = "macos"))]
+#[cfg(feature = "three_d")]
 use egui_render_three_d::ThreeDBackend as DefaultGfxBackend;
 // mac doesn't support opengl. so, use wgpu.
-#[cfg(target_os = "macos")]
+#[cfg(feature = "wgpu")]
 pub use egui_render_wgpu;
-#[cfg(target_os = "macos")]
+#[cfg(feature = "wgpu")]
 use egui_render_wgpu::WgpuBackend as DefaultGfxBackend;
 pub use egui_window_glfw_passthrough;
 use egui_window_glfw_passthrough::{GlfwBackend, GlfwConfig};
@@ -23,9 +23,9 @@ pub fn start<T: EguiOverlay + 'static>(user_data: T) {
             // scale the window size based on monitor scale. as 800x600 looks too small on a 4k screen, compared to a hd screen in absolute pixel sizes.
             gtx.window_hint(egui_window_glfw_passthrough::glfw::WindowHint::ScaleToMonitor(true));
         }),
-        #[cfg(not(target_os = "macos"))]
+        #[cfg(feature = "three_d")]
         opengl_window: Some(true), // opengl for non-macos, for faster compilation and less wgpu bloat. also, drivers are better with gl transparency than vk
-        #[cfg(target_os = "macos")]
+        #[cfg(feature = "wgpu")]
         opengl_window: Some(false), // macos doesn't support opengl.
         transparent_window: Some(true),
         ..Default::default()
@@ -39,26 +39,24 @@ pub fn start<T: EguiOverlay + 'static>(user_data: T) {
     let latest_size = [latest_size.0 as _, latest_size.1 as _];
 
     // for non-macos, we just use three_d because its much faster compile times and opengl transparency being more reliable than vulkan transparency
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(feature = "three_d")]
     let default_gfx_backend = {
-        use raw_window_handle::HasRawWindowHandle;
-        let handle = glfw_backend.window.raw_window_handle();
         DefaultGfxBackend::new(
             egui_render_three_d::ThreeDConfig {
                 ..Default::default()
             },
             |s| glfw_backend.get_proc_address(s),
-            handle,
             latest_size,
         )
     };
+
     // macos doesn't have opengl, so wgpu/metal for that.
-    #[cfg(target_os = "macos")]
+    #[cfg(feature = "wgpu")]
     let default_gfx_backend = DefaultGfxBackend::new(
         egui_render_wgpu::WgpuConfig {
             ..Default::default()
         },
-        Some(&glfw_backend.window),
+        Some(Box::new(glfw_backend.window.render_context())),
         latest_size,
     );
     let overlap_app = OverlayApp {
@@ -113,7 +111,7 @@ pub trait EguiOverlay {
             glfw_backend.window.swap_buffers();
         } else {
             // for wgpu backend
-            #[cfg(target_os = "macos")]
+            #[cfg(feature = "wgpu")]
             default_gfx_backend.present()
         }
         Some((platform_output, repaint_after))

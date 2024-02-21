@@ -10,7 +10,6 @@ use glfw::Glfw;
 use glfw::StandardCursor;
 use glfw::WindowEvent;
 use glfw::WindowHint;
-use std::sync::mpsc::Receiver;
 use tracing::info;
 /// This is the window backend for egui using [`glfw`]
 /// You can configure most of it at startup using [`GlfwConfig`].
@@ -37,8 +36,8 @@ use tracing::info;
 ///
 pub struct GlfwBackend {
     pub glfw: glfw::Glfw,
-    pub events_receiver: Receiver<(f64, WindowEvent)>,
-    pub window: glfw::Window,
+    pub events_receiver: glfw::GlfwReceiver<(f64, WindowEvent)>,
+    pub window: glfw::PWindow,
     /// in virtual units
     pub window_size_virtual: [u32; 2],
     /// in logical points
@@ -107,8 +106,7 @@ impl Default for GlfwConfig {
 
 impl GlfwBackend {
     pub fn new(config: GlfwConfig) -> Self {
-        let mut glfw_context =
-            glfw::init(glfw::FAIL_ON_ERRORS).expect("failed to create glfw context");
+        let mut glfw_context = glfw::init(glfw::log_errors).expect("failed to create glfw context");
         glfw_context.window_hint(WindowHint::ScaleToMonitor(true));
 
         let GlfwConfig {

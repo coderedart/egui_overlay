@@ -17,6 +17,6 @@ image = ["glfw/image"]
 
 
 [dependencies]
-glfw = { version = "0.51.1", package = "glfw-passthrough", default-features = false }
+glfw = { version = "0.55", package = "glfw-passthrough", default-features = false }
 tracing = { workspace = true }
 egui = { workspace = true }

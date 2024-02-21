@@ -1,4 +1,4 @@
-use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
+use rwh::HasWindowHandle;
 use tracing::{debug, info};
 use wgpu::*;
 pub struct SurfaceManager {
@@ -10,7 +10,7 @@ pub struct SurfaceManager {
     /// once we acquire a swapchain image (surface texture), we will put it here. surface_view will be created from this
     pub surface_current_image: Option<SurfaceTexture>,
     /// this is the window surface
-    pub surface: Option<Surface>,
+    pub surface: Option<Surface<'static>>,
     /// this configuration needs to be updated with the latest resize
     pub surface_config: SurfaceConfiguration,
     /// Surface manager will iterate over this and find the first format that is supported by surface.
@@ -27,13 +27,13 @@ impl Drop for SurfaceManager {
 impl SurfaceManager {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        window: Option<impl HasRawWindowHandle + HasRawDisplayHandle>,
+        window: Option<Box<dyn WindowHandle>>,
         transparent: Option<bool>,
         latest_fb_size: [u32; 2],
         instance: &Instance,
         adapter: &Adapter,
         device: &Device,
-        surface: Option<Surface>,
+        surface: Option<Surface<'static>>,
         surface_formats_priority: Vec<TextureFormat>,
         surface_config: SurfaceConfiguration,
     ) -> Self {
@@ -98,19 +98,19 @@ impl SurfaceManager {
     /// this is used during resume events to create a surface.
     pub fn reconfigure_surface(
         &mut self,
-        window: Option<impl HasRawWindowHandle + HasRawDisplayHandle>,
+        window: Option<Box<dyn WindowHandle>>,
         transparent: Option<bool>,
         latest_fb_size: [u32; 2],
         instance: &Instance,
         adapter: &Adapter,
         device: &Device,
     ) {
-        if let Some(window) = &window {
+        if let Some(window) = window {
             if self.surface.is_none() {
-                self.surface = Some(unsafe {
-                    tracing::debug!("creating a surface with {:?}", window.raw_window_handle());
+                self.surface = Some({
+                    tracing::debug!("creating a surface with {:?}", window.window_handle());
                     instance
-                        .create_surface(window)
+                        .create_surface(SurfaceTarget::Window(window))
                         .expect("failed to create surface")
                 });
             }

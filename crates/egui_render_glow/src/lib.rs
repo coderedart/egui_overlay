@@ -6,7 +6,6 @@ use egui::TexturesDelta;
 pub use glow;
 use glow::{Context as GlowContext, HasContext, *};
 use helpers::*;
-use raw_window_handle::RawWindowHandle;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
 
@@ -111,11 +110,10 @@ impl GlowBackend {
     pub fn new(
         config: GlowConfig,
         get_proc_address: impl FnMut(&str) -> *const std::ffi::c_void,
-        handle: RawWindowHandle,
         framebuffer_size: [u32; 2],
     ) -> Self {
         let glow_context: Arc<glow::Context> =
-            unsafe { create_glow_context(get_proc_address, handle, config) };
+            unsafe { create_glow_context(get_proc_address, config) };
 
         if glow_context.supported_extensions().contains("EXT_sRGB")
             || glow_context.supported_extensions().contains("GL_EXT_sRGB")
