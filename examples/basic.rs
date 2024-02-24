@@ -85,6 +85,37 @@ impl EguiOverlay for HelloWorld {
             if changed {
                 glfw_backend.set_window_size(size);
             }
+            // how to change size.
+            // WARNING: don't use drag value, because window size changing while dragging ui messes things up.
+            let mut pos = glfw_backend.window_position;
+            let mut changed = false;
+            ui.horizontal(|ui| {
+                ui.label("x: ");
+                ui.add_enabled(false, DragValue::new(&mut pos[0]));
+                if ui.button("inc").clicked() {
+                    pos[0] += 10;
+                    changed = true;
+                }
+                if ui.button("dec").clicked() {
+                    pos[0] -= 10;
+                    changed = true;
+                }
+            });
+            ui.horizontal(|ui| {
+                ui.label("y: ");
+                ui.add_enabled(false, DragValue::new(&mut pos[1]));
+                if ui.button("inc").clicked() {
+                    pos[1] += 10;
+                    changed = true;
+                }
+                if ui.button("dec").clicked() {
+                    pos[1] -= 10;
+                    changed = true;
+                }
+            });
+            if changed {
+                glfw_backend.window.set_pos(pos[0], pos[1]);
+            }
         });
 
         // here you decide if you want to be passthrough or not.
