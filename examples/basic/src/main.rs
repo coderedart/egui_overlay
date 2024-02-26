@@ -7,6 +7,8 @@ use egui_render_three_d::ThreeDBackend as DefaultGfxBackend;
 #[cfg(feature = "wgpu")]
 use egui_render_wgpu::WgpuBackend as DefaultGfxBackend;
 
+#[cfg(not(any(feature = "three_d", feature = "wgpu")))]
+compile_error!("you must enable either `three_d` or `wgpu` feature to run this example");
 fn main() {
     use tracing_subscriber::{fmt, prelude::*, EnvFilter};
     // if RUST_LOG is not set, we will use the following filters

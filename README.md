@@ -16,6 +16,7 @@ As you can see in `lib.rs`, its barely 150 lines of code to set up. It will allo
 Look at the `basic` example for a rough idea of how to use this crate for normal usecase.
 Look at the `triangle` example (only for linux/windows users, as i use three-d), to see how you can draw custom stuff too.
 
+> use `cargo run -p basic` to run the example.
 
 
 https://github.com/coderedart/egui_overlay/assets/24411704/9f7bab7b-26ec-47d1-b51e-74006dfa7b0d

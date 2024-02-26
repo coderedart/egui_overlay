@@ -1,0 +1,20 @@
+[package]
+name = "basic"
+version.workspace = true
+repository.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "A basic example that shows how we can use egui_overlay crate"
+publish = false
+
+[features]
+three_d = ["dep:egui_render_three_d"]
+wgpu = ["dep:egui_render_wgpu"]
+
+[dependencies]
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+egui = { workspace = true }
+egui_overlay = { workspace = true }
+egui_window_glfw_passthrough = { workspace = true }
+egui_render_three_d = { workspace = true, optional = true }
+egui_render_wgpu = { workspace = true, optional = true }
