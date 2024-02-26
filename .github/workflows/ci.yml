@@ -32,13 +32,13 @@ jobs:
         run: cargo fmt --check
 
       - name: Check
-        run: cargo check --workspace
+        run: cargo check --workspace --features=three_d
 
       - name: Clippy
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy --workspace --features=three_d -- -D warnings
 
       - name: Build
-        run: cargo build --workspace
+        run: cargo build --workspace --features=three_d
 
       - name: Build (Wgpu)
         run: cargo build --workspace --no-default-features --features=egui_default,wgpu
