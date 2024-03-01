@@ -41,7 +41,7 @@ jobs:
         run: cargo build --workspace --features=three_d
 
       - name: Build (Wgpu)
-        run: cargo build -p egui_overlay --features=egui_default,wgpu --no-default-features
+        run: cargo build -p egui_overlay --features=egui_default,wgpu,glfw_default --no-default-features
         
       - name: Audit
         run: cargo audit
