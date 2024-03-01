@@ -1,19 +1,20 @@
 [package]
 name = "egui_overlay"
-version.workspace = true
+version = "0.8.1"
 repository.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Egui integration to easily create Desktop Overlays"
 
 [features]
-default = ["egui_default", "three_d"]
+default = ["egui_default", "glfw_default", "three_d"]
 egui_default = ["egui/default"]
+glfw_default = ["egui_window_glfw_passthrough/default"]
 three_d = ["dep:egui_render_three_d"]
 wgpu = ["dep:egui_render_wgpu"]
 
 [dependencies]
-egui_window_glfw_passthrough = { version = "0.8", path = "crates/egui_window_glfw_passthrough" }
+egui_window_glfw_passthrough = { version = "0.8", path = "crates/egui_window_glfw_passthrough", default-features = false }
 egui = { workspace = true }
 tracing = { workspace = true }
 raw-window-handle = { workspace = true }

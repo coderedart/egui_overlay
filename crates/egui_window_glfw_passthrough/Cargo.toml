@@ -1,7 +1,7 @@
 [package]
 name = "egui_window_glfw_passthrough"
 description = "egui windowing backend using Glfw"
-version.workspace = true
+version = "0.8.1"
 repository.workspace = true
 edition.workspace = true
 license.workspace = true

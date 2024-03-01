@@ -641,7 +641,7 @@ impl GlfwBackend {
 /// 2. Non-Printable.
 ///
 /// Printable keys are dependent on layout. For example, `W` in `Qwerty` layout will map to `Z` in `Azerty` layout.
-/// For text, we will always use the text event. But for "keys" (eg: game input), we will need to decide whether to consider the `W`` as `W`` or `Z`.
+/// For text, we will always use the text event. But for "keys" (eg: game input), we will need to decide whether to consider the `W` as `W` or `Z`.
 /// For all printable keys like `W`, we will use this fn to translate to egui's `Key`. So, we will translate it to `Z`.
 /// For non-printable keys like `Enter` or `Backspace` or `F2`, we will translate in a layout independent way.
 /// This is very useful for eg: keyboard shortcuts, as user expects to see `Z` when he uses it as shortcut on his keyboard.
@@ -649,8 +649,12 @@ impl GlfwBackend {
 /// You can directly use [layout_independent_glfw_to_egui_key] to just get the physical key location without caring about logical layout.
 /// So, you will simply get `W` even if the user is using Azerty layout. This is important, as you want to preserve the "positions" irrespective of layouts.
 /// So, pressing the key at `W` location will always move the character forward, even if it is `Z` according to layout.
+#[allow(unused)]
 pub fn layout_based_glfw_to_egui_key(key: glfw::Key, scancode: i32) -> Option<Key> {
-    match key {
+    #[cfg(target_os = "emscripten")]
+    return layout_independent_glfw_to_egui_key(key);
+    #[cfg(not(target_os = "emscripten"))]
+    return match key {
         glfw::Key::Apostrophe
         | glfw::Key::Comma
         | glfw::Key::Minus
@@ -719,7 +723,7 @@ pub fn layout_based_glfw_to_egui_key(key: glfw::Key, scancode: i32) -> Option<Ke
             name.and_then(|n| egui::Key::from_name(&n))
         }
         _ => layout_independent_glfw_to_egui_key(key),
-    }
+    };
 }
 /// a function to get the matching egui key event for a given glfw key. egui does not support all the keys provided here.
 /// This just matches the enum to map to the relevant egui key.

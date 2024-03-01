@@ -118,14 +118,14 @@ pub trait EguiOverlay {
     }
 }
 
-pub struct OverlayApp<T: EguiOverlay> {
+pub struct OverlayApp<T: EguiOverlay + 'static> {
     pub user_data: T,
     pub egui_context: Context,
     pub default_gfx_backend: DefaultGfxBackend,
     pub glfw_backend: GlfwBackend,
 }
 
-impl<T: EguiOverlay> OverlayApp<T> {
+impl<T: EguiOverlay + 'static> OverlayApp<T> {
     pub fn enter_event_loop(mut self) {
         // polls for events and returns if there's some activity.
         // But if there is no event for the specified duration, it will return anyway.
@@ -171,7 +171,7 @@ impl<T: EguiOverlay> OverlayApp<T> {
 
         // on emscripten, just keep calling forever i guess.
         #[cfg(target_os = "emscripten")]
-        set_main_loop_callback(callback);
+        egui_window_glfw_passthrough::set_main_loop_callback(callback);
 
         #[cfg(not(target_os = "emscripten"))]
         {
