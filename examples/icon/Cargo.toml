@@ -8,13 +8,17 @@ description = "shows how we can set a window icon"
 publish = false
 
 [features]
-three_d = ["dep:egui_render_three_d"]
-wgpu = ["dep:egui_render_wgpu"]
+default = ["three_d"]
+three_d = ["dep:egui_render_three_d", "egui_overlay/three_d"]
+wgpu = ["dep:egui_render_wgpu", "egui_overlay/wgpu"]
 
 [dependencies]
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 egui = { workspace = true }
-egui_overlay = { workspace = true }
+egui_overlay = { workspace = true, default-features = false, features = [
+    "egui_default",
+    "glfw_default",
+] }
 egui_window_glfw_passthrough = { workspace = true, features = ["image"] }
 egui_render_three_d = { workspace = true, optional = true }
 egui_render_wgpu = { workspace = true, optional = true }

@@ -28,7 +28,7 @@ egui = { version = "0.26", default-features = false }
 bytemuck = { version = "1", default-features = false }
 tracing = { version = "0.1", default-features = false }
 raw-window-handle = { version = "0.6" }
-egui_overlay = { version = "0.8", path = "." }
+egui_overlay = { version = "0.8", path = ".", default-features = false}
 egui_render_three_d = { version = "0.8", path = "crates/egui_render_three_d" }
 egui_render_wgpu = { version = "0.8", path = "crates/egui_render_wgpu" }
 egui_window_glfw_passthrough = { version = "0.8", path = "crates/egui_window_glfw_passthrough" }

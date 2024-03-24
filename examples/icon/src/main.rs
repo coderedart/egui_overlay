@@ -37,10 +37,10 @@ impl EguiOverlay for HelloWorld {
             let icon = image::load_from_memory(ICON_BYTES).unwrap().to_rgba8();
             {
                 // if you enable `image` feature of glfw-passthrough crate, you can just use this
-                glfw_backend.window.set_icon(vec![icon]);
+                // glfw_backend.window.set_icon(vec![icon]);
 
-                // alternative api if you have raw pixels, or don't want to enable image feature of glfw (maybe it pulls an older version of image crate or some other reason)
-                /*
+                // alternative api
+                // useful when you don't want to enable image feature of glfw (maybe it pulls an older version of image crate leading to duplicate image crates in your dependency tree)
                 let pixels = icon
                     .pixels()
                     .map(|pixel| u32::from_le_bytes(pixel.0))
@@ -51,7 +51,6 @@ impl EguiOverlay for HelloWorld {
                     pixels,
                 };
                 glfw_backend.window.set_icon_from_pixels(vec![icon]);
-                */
             }
         }
         // just some controls to show how you can use glfw_backend
