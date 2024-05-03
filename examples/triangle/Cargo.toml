@@ -12,5 +12,5 @@ publish = false
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 egui = { workspace = true }
 egui_render_three_d = { workspace = true }
-egui_overlay = { workspace = true }
+egui_overlay = { workspace = true, default-features = true}
 egui_window_glfw_passthrough = { workspace = true }
