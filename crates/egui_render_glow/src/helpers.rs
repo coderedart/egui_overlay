@@ -41,13 +41,13 @@ pub unsafe fn create_glow_context(
 ) -> Arc<glow::Context> {
     // for wasm32-unknown-unknown, use glow's own constructor.
     #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
-    let glow_context = create_glow_wasm32_unknown(window_backend, config.webgl_config);
+    let mut glow_context = create_glow_wasm32_unknown(window_backend, config.webgl_config);
     // for non-web and emscripten platforms, just use loader fn
     #[cfg(any(not(target_arch = "wasm32"), target_os = "emscripten"))]
-    let glow_context = glow::Context::from_loader_function(|s| get_proc_address(s));
+    let mut glow_context = glow::Context::from_loader_function(|s| get_proc_address(s));
 
     if config.enable_debug {
-        enable_debug(&glow_context, default_gl_debug_callback);
+        enable_debug(&mut glow_context, default_gl_debug_callback);
     }
     tracing::debug!("created glow context");
     glow_error!(glow_context);
@@ -324,8 +324,8 @@ pub fn default_gl_debug_callback(
 
 /// enables debug callbacks, and sets the provided callback.
 pub unsafe fn enable_debug(
-    gl: &glow::Context,
-    debug_callback: impl FnMut(u32, u32, u32, u32, &str),
+    gl: &mut glow::Context,
+    debug_callback: impl FnMut(u32, u32, u32, u32, &str) + 'static,
 ) {
     gl.enable(glow::DEBUG_OUTPUT);
     gl.enable(glow::DEBUG_OUTPUT_SYNCHRONOUS);

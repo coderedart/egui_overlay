@@ -14,7 +14,7 @@ tracing = { workspace = true }
 bytemuck = { workspace = true }
 egui = { workspace = true, features = ["bytemuck"] }
 raw-window-handle = { workspace = true }
-glow = { version = "0.12" } # upgrade when three-d does
+glow = { version = "0.13" } # upgrade when three-d does
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))'.dependencies]
 wasm-bindgen = { version = "0.2" }

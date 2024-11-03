@@ -7,7 +7,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-egui_render_glow = { version = "0.8", path = "../egui_render_glow" }
-three-d = { version = "0.16", default-features = false }
+egui_render_glow = { version = "0.9", path = "../egui_render_glow" }
+three-d = { version = "0.17", default-features = false }
 egui = { workspace = true }
 raw-window-handle = { workspace = true }

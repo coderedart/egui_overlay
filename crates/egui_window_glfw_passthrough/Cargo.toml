@@ -1,17 +1,16 @@
 [package]
 name = "egui_window_glfw_passthrough"
 description = "egui windowing backend using Glfw"
-version = "0.8.1"
+version.workspace = true
 repository.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [features]
 default = ["glfw/default"]
-all = ["glfw_sys", "vulkan", "wayland", "log", "image"]
+all = ["glfw_sys", "vulkan", "log", "image"]
 glfw_sys = ["glfw/glfw-sys-passthrough"]
 vulkan = ["glfw/vulkan"]
-wayland = ["glfw/wayland"]
 log = ["glfw/log"]
 image = ["glfw/image"]
 

@@ -89,7 +89,7 @@ pub trait EguiOverlay {
             let latest_size = glfw_backend.window.get_framebuffer_size();
             [latest_size.0 as _, latest_size.1 as _]
         });
-        egui_context.begin_frame(input);
+        egui_context.begin_pass(input);
         self.gui_run(egui_context, default_gfx_backend, glfw_backend);
 
         let egui::FullOutput {
@@ -98,7 +98,7 @@ pub trait EguiOverlay {
             shapes,
             pixels_per_point,
             viewport_output,
-        } = egui_context.end_frame();
+        } = egui_context.end_pass();
         let meshes = egui_context.tessellate(shapes, pixels_per_point);
         let repaint_after = viewport_output
             .into_iter()

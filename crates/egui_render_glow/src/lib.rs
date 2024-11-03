@@ -221,7 +221,7 @@ impl Painter {
             let egui_program = create_program_from_src(
                 gl,
                 EGUI_VS,
-                if cfg!(wasm32) {
+                if cfg!(target_arch = "wasm32") {
                     // on wasm, we always assume srgb framebuffer
                     EGUI_LINEAR_OUTPUT_FS
                 } else {
@@ -530,7 +530,7 @@ fn scissor_from_clip_rect(
 
     // first, we turn the clip rectangle into physical framebuffer coordinates
     // clip_min is top left point and clip_max is bottom right.
-    let clip_min_x = scale * clip_rect.min.x;
+    let clip_min_x = scale * clip_rect.min.y;
     let clip_min_y = scale * clip_rect.min.y;
     let clip_max_x = scale * clip_rect.max.x;
     let clip_max_y = scale * clip_rect.max.y;
