@@ -3,13 +3,13 @@
 use egui::{Event, Key, MouseWheelUnit, PointerButton, Pos2, RawInput};
 use egui::{ViewportEvent, ViewportId, ViewportInfo};
 pub use glfw;
-use glfw::{Action, Modifiers};
 use glfw::ClientApiHint;
 use glfw::Context;
 use glfw::Glfw;
 use glfw::StandardCursor;
 use glfw::WindowEvent;
 use glfw::WindowHint;
+use glfw::{Action, Modifiers};
 use tracing::info;
 /// This is the window backend for egui using [`glfw`]
 /// You can configure most of it at startup using [`GlfwConfig`].
@@ -64,7 +64,6 @@ pub struct GlfwBackend {
     pub events_receiver: glfw::GlfwReceiver<(f64, WindowEvent)>,
     pub window: glfw::PWindow,
     pub glfw: glfw::Glfw,
-
 }
 impl Drop for GlfwBackend {
     fn drop(&mut self) {
@@ -244,8 +243,6 @@ impl GlfwBackend {
         );
         let pass = window.is_mouse_passthrough();
 
-
-        
         Self {
             glfw: glfw_context,
             events_receiver,
@@ -350,7 +347,6 @@ impl GlfwBackend {
         self.passthrough
     }
     pub fn set_passthrough(&mut self, passthrough: bool) {
-        
         if self.passthrough == passthrough {
             return;
         }
@@ -449,13 +445,11 @@ impl GlfwBackend {
                     };
                     Some(emb)
                 }
-                glfw::WindowEvent::Scroll(x, y) => {
-                    Some(Event::MouseWheel {
-                        unit: MouseWheelUnit::Point,
-                        delta:  [x as f32, y as f32].into(),
-                        modifiers: glfw_to_egui_modifers(self.modifiers)
-                    })
-                }
+                glfw::WindowEvent::Scroll(x, y) => Some(Event::MouseWheel {
+                    unit: MouseWheelUnit::Point,
+                    delta: [x as f32, y as f32].into(),
+                    modifiers: glfw_to_egui_modifers(self.modifiers),
+                }),
                 glfw::WindowEvent::Key(k, scancode, a, m) => match k {
                     glfw::Key::C => {
                         if glfw_to_egui_action(a).unwrap_or_default()

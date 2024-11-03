@@ -88,6 +88,9 @@ impl EguiPainter {
         rpass: &mut RenderPass<'rpass>,
         draw_calls: Vec<EguiDrawCalls>,
     ) {
+        if self.vb.size() == 0 {
+            return;
+        }
         // rpass.set_viewport(0.0, 0.0, width as f32, height as f32, 0.0, 1.0);
         rpass.set_pipeline(&self.pipeline);
         rpass.set_bind_group(0, &self.screen_size_bind_group, &[]);
@@ -173,8 +176,12 @@ impl EguiPainter {
             layout: Some(&egui_pipeline_layout),
             vertex: VertexState {
                 module: &shader_module,
-                entry_point: "vs_main",
+                entry_point: Some("vs_main"),
                 buffers: &VERTEX_BUFFER_LAYOUT,
+                compilation_options: PipelineCompilationOptions {
+                    constants: &Default::default(),
+                    zero_initialize_workgroup_memory: false,
+                },
             },
             primitive: EGUI_PIPELINE_PRIMITIVE_STATE,
             depth_stencil: None,
@@ -182,18 +189,23 @@ impl EguiPainter {
             multisample: MultisampleState::default(),
             fragment: Some(FragmentState {
                 module: &shader_module,
-                entry_point: if pipeline_surface_format.is_srgb() {
+                entry_point: Some(if pipeline_surface_format.is_srgb() {
                     "fs_main_linear_output"
                 } else {
                     "fs_main_srgb_output"
-                },
+                }),
                 targets: &[Some(ColorTargetState {
                     format: pipeline_surface_format,
                     blend: Some(EGUI_PIPELINE_BLEND_STATE),
                     write_mask: ColorWrites::ALL,
                 })],
+                compilation_options: PipelineCompilationOptions {
+                    constants: &Default::default(),
+                    zero_initialize_workgroup_memory: false,
+                },
             }),
             multiview: None,
+            cache: None,
         })
     }
     pub fn new(dev: &Device, surface_format: TextureFormat) -> Self {
@@ -288,13 +300,21 @@ impl EguiPainter {
             layout: None,
             vertex: wgpu::VertexState {
                 module: &mipmap_shader,
-                entry_point: "vs_main",
+                entry_point: Some("vs_main"),
                 buffers: &[],
+                compilation_options: PipelineCompilationOptions {
+                    constants: &Default::default(),
+                    zero_initialize_workgroup_memory: false,
+                },
             },
             fragment: Some(wgpu::FragmentState {
                 module: &mipmap_shader,
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
                 targets: &[Some(TextureFormat::Rgba8UnormSrgb.into())],
+                compilation_options: PipelineCompilationOptions {
+                    constants: &Default::default(),
+                    zero_initialize_workgroup_memory: false,
+                },
             }),
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -303,6 +323,7 @@ impl EguiPainter {
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
+            cache: None,
         });
 
         let mipmap_bgl = dev.create_bind_group_layout(&BindGroupLayoutDescriptor {

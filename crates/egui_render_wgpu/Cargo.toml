@@ -7,7 +7,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-wgpu = { version = "0.19" }
+wgpu = { version = "23" }
 pollster = { version = "0.3" }
 tracing = { workspace = true }
 bytemuck = { workspace = true }

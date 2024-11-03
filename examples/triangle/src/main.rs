@@ -65,9 +65,11 @@ impl EguiOverlay for HelloWorld {
             // Render the triangle with the color material which uses the per vertex colors defined at construction
             .render(&camera, std::iter::once(model), &[]);
         }
-        egui::Window::new("hello window").scroll([true, true]).show(egui_context, |ui| {
-            ui.text_edit_multiline(&mut self.text);
-        });
+        egui::Window::new("hello window")
+            .scroll([true, true])
+            .show(egui_context, |ui| {
+                ui.text_edit_multiline(&mut self.text);
+            });
 
         // just some controls to show how you can use glfw_backend
         egui::Window::new("controls").show(egui_context, |ui| {

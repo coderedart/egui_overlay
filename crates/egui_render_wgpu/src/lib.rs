@@ -28,6 +28,7 @@ impl Default for WgpuConfig {
                 label: Some("my wgpu device"),
                 required_features: Default::default(),
                 required_limits: Limits::downlevel_defaults(),
+                memory_hints: MemoryHints::default(),
             },
             surface_config: SurfaceConfiguration {
                 usage: TextureUsages::RENDER_ATTACHMENT,
