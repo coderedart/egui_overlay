@@ -23,7 +23,10 @@ https://github.com/coderedart/egui_overlay/assets/24411704/9f7bab7b-26ec-47d1-b5
 
 ## Platforms
 1. Windows
-2. Linux (both X11 and Wayland). But support might vary between different window managers.
+2. Linux 
+    1. X11 supported natively. And wayland can work via Xwayland. But support might vary between window managers.
+    2. You need a compositor that supports transparency. eg: `kwin` supports compositing, but `i3wm` needs an external compositor like `picom`. 
+    3. Some tiling window managers like i3wm need users to configure your overlay window as "floating" to keep it above other tiled windows.  
 3. Mac
 
 ## Bugs
