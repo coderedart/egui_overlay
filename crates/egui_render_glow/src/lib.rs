@@ -530,7 +530,7 @@ fn scissor_from_clip_rect(
 
     // first, we turn the clip rectangle into physical framebuffer coordinates
     // clip_min is top left point and clip_max is bottom right.
-    let clip_min_x = scale * clip_rect.min.y;
+    let clip_min_x = scale * clip_rect.min.x;
     let clip_min_y = scale * clip_rect.min.y;
     let clip_max_x = scale * clip_rect.max.x;
     let clip_max_y = scale * clip_rect.max.y;
